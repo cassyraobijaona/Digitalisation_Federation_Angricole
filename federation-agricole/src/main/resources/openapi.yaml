@@ -1,0 +1,335 @@
+openapi: 3.0.3
+info:
+  title: API - Fédération de Collectivités Agricoles
+  description: |
+    Spécification OpenAPI pour la digitalisation de la fédération
+    de collectivités agricoles de Madagascar.
+  version: 1.0.0
+  contact:
+    name: Équipe de développement
+    email: contact@federation-agricole.mg
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Serveur de développement local
+
+tags:
+  - name: Trésorerie
+    description: Situation de trésorerie - comptes (Partie D)
+  - name: Activités
+    description: Activités des collectivités et de la fédération (Partie E)
+  - name: Assiduité
+    description: Présences aux activités (Partie F)
+  - name: Statistiques
+    description: Rapports et statistiques (Partie G)
+
+paths:
+
+  /collectivites/{collectiviteId}/comptes:
+    get:
+      tags:
+        - Trésorerie
+      summary: Lister tous les comptes d'une collectivité
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des comptes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Compte'
+        '404':
+          description: Collectivité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Trésorerie
+      summary: Ajouter un compte à une collectivité
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompteRequest'
+      responses:
+        '201':
+          description: Compte créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Compte'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Collectivité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /collectivites/{collectiviteId}/comptes/{compteId}:
+    get:
+      tags:
+        - Trésorerie
+      summary: Détail d'un compte
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: compteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détail du compte
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Compte'
+        '404':
+          description: Compte ou collectivité non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Trésorerie
+      summary: Mettre à jour le solde d'un compte
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: compteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompteUpdateRequest'
+      responses:
+        '200':
+          description: Compte mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Compte'
+        '404':
+          description: Compte ou collectivité non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /federation/comptes:
+    get:
+      tags:
+        - Trésorerie
+      summary: Lister tous les comptes de la fédération
+      responses:
+        '200':
+          description: Liste des comptes de la fédération
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Compte'
+
+    post:
+      tags:
+        - Trésorerie
+      summary: Ajouter un compte à la fédération
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompteRequest'
+      responses:
+        '201':
+          description: Compte créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Compte'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+
+    Compte:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        type:
+          type: string
+          enum: [caisse, bancaire, mobile_money]
+          example: bancaire
+        solde:
+          type: number
+          format: double
+          example: 1500000.00
+        date_solde:
+          type: string
+          format: date
+          example: '2026-04-20'
+        details:
+          oneOf:
+            - $ref: '#/components/schemas/CompteBancaire'
+            - $ref: '#/components/schemas/CompteMobileMoney'
+
+    CompteRequest:
+      type: object
+      required: [type, solde, date_solde]
+      properties:
+        type:
+          type: string
+          enum: [caisse, bancaire, mobile_money]
+        solde:
+          type: number
+          format: double
+        date_solde:
+          type: string
+          format: date
+        details:
+          oneOf:
+            - $ref: '#/components/schemas/CompteBancaireRequest'
+            - $ref: '#/components/schemas/CompteMobileMoneyRequest'
+
+    CompteUpdateRequest:
+      type: object
+      required: [solde, date_solde]
+      properties:
+        solde:
+          type: number
+          format: double
+          example: 2000000.00
+        date_solde:
+          type: string
+          format: date
+          example: '2026-04-20'
+
+    CompteBancaire:
+      type: object
+      properties:
+        titulaire:
+          type: string
+          example: Jean Rakoto
+        banque:
+          type: string
+          enum: [BRED, MCB, BMOI, BOA, BGFI, AFG, ACCES_BANQUE, BAOBAB, SIPEM]
+          example: BOA
+        code_banque:
+          type: string
+          example: '00001'
+        code_guichet:
+          type: string
+          example: '00001'
+        numero_compte:
+          type: string
+          example: '00000000001'
+        cle_rib:
+          type: string
+          example: '00'
+
+    CompteBancaireRequest:
+      type: object
+      required: [titulaire, banque, code_banque, code_guichet, numero_compte, cle_rib]
+      properties:
+        titulaire:
+          type: string
+        banque:
+          type: string
+          enum: [BRED, MCB, BMOI, BOA, BGFI, AFG, ACCES_BANQUE, BAOBAB, SIPEM]
+        code_banque:
+          type: string
+          minLength: 5
+          maxLength: 5
+        code_guichet:
+          type: string
+          minLength: 5
+          maxLength: 5
+        numero_compte:
+          type: string
+          minLength: 11
+          maxLength: 11
+        cle_rib:
+          type: string
+          minLength: 2
+          maxLength: 2
+
+    CompteMobileMoney:
+      type: object
+      properties:
+        titulaire:
+          type: string
+          example: Jean Rakoto
+        service:
+          type: string
+          enum: [Orange Money, Mvola, Airtel Money]
+          example: Mvola
+        telephone:
+          type: string
+          example: '0341234567'
+
+    CompteMobileMoneyRequest:
+      type: object
+      required: [titulaire, service, telephone]
+      properties:
+        titulaire:
+          type: string
+        service:
+          type: string
+          enum: [Orange Money, Mvola, Airtel Money]
+        telephone:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: Ressource non trouvée
