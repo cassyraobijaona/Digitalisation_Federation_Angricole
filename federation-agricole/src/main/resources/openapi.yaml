@@ -192,9 +192,215 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  # PARTIE E
+  /collectivites/{collectiviteId}/activites:
+    get:
+      tags:
+        - Activités
+      summary: Lister toutes les activités d'une collectivité
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ assemblee_generale, formation_junior, exceptionnelle ]
+          description: Filtrer par type d'activité
+      responses:
+        '200':
+          description: Liste des activités
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activite'
+        '404':
+          description: Collectivité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Activités
+      summary: Créer une activité pour une collectivité
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActiviteRequest'
+      responses:
+        '201':
+          description: Activité créée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activite'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Collectivité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    /collectivites/{collectiviteId}/activites/{activiteId}:
+      get:
+        tags:
+          - Activités
+        summary: Détail d'une activité
+        parameters:
+          - name: collectiviteId
+            in: path
+            required: true
+            schema:
+              type: integer
+          - name: activiteId
+            in: path
+            required: true
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: Détail de l'activité
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Activite'
+          '404':
+            description: Activité ou collectivité non trouvée
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+
+      put:
+        tags:
+          - Activités
+        summary: Modifier une activité
+        parameters:
+          - name: collectiviteId
+            in: path
+            required: true
+            schema:
+              type: integer
+          - name: activiteId
+            in: path
+            required: true
+            schema:
+              type: integer
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiviteRequest'
+        responses:
+          '200':
+            description: Activité mise à jour
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Activite'
+          '404':
+            description: Activité ou collectivité non trouvée
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+
+      delete:
+        tags:
+          - Activités
+        summary: Supprimer une activité
+        parameters:
+          - name: collectiviteId
+            in: path
+            required: true
+            schema:
+              type: integer
+          - name: activiteId
+            in: path
+            required: true
+            schema:
+              type: integer
+        responses:
+          '204':
+            description: Activité supprimée
+          '404':
+            description: Activité ou collectivité non trouvée
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+
+    /federation/activites:
+      get:
+        tags:
+          - Activités
+        summary: Lister toutes les activités de la fédération
+        parameters:
+          - name: obligatoire
+            in: query
+            required: false
+            schema:
+              type: boolean
+            description: Filtrer par caractère obligatoire
+        responses:
+          '200':
+            description: Liste des activités de la fédération
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Activite'
+
+      post:
+        tags:
+          - Activités
+        summary: Créer une activité au niveau de la fédération
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiviteRequest'
+        responses:
+          '201':
+            description: Activité créée
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Activite'
+          '400':
+            description: Données invalides
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+
 components:
   schemas:
-
     Compte:
       type: object
       properties:
@@ -203,7 +409,7 @@ components:
           example: 1
         type:
           type: string
-          enum: [caisse, bancaire, mobile_money]
+          enum: [ caisse, bancaire, mobile_money ]
           example: bancaire
         solde:
           type: number
@@ -220,11 +426,11 @@ components:
 
     CompteRequest:
       type: object
-      required: [type, solde, date_solde]
+      required: [ type, solde, date_solde ]
       properties:
         type:
           type: string
-          enum: [caisse, bancaire, mobile_money]
+          enum: [ caisse, bancaire, mobile_money ]
         solde:
           type: number
           format: double
@@ -238,7 +444,7 @@ components:
 
     CompteUpdateRequest:
       type: object
-      required: [solde, date_solde]
+      required: [ solde, date_solde ]
       properties:
         solde:
           type: number
@@ -257,7 +463,7 @@ components:
           example: Jean Rakoto
         banque:
           type: string
-          enum: [BRED, MCB, BMOI, BOA, BGFI, AFG, ACCES_BANQUE, BAOBAB, SIPEM]
+          enum: [ BRED, MCB, BMOI, BOA, BGFI, AFG, ACCES_BANQUE, BAOBAB, SIPEM ]
           example: BOA
         code_banque:
           type: string
@@ -274,13 +480,13 @@ components:
 
     CompteBancaireRequest:
       type: object
-      required: [titulaire, banque, code_banque, code_guichet, numero_compte, cle_rib]
+      required: [ titulaire, banque, code_banque, code_guichet, numero_compte, cle_rib ]
       properties:
         titulaire:
           type: string
         banque:
           type: string
-          enum: [BRED, MCB, BMOI, BOA, BGFI, AFG, ACCES_BANQUE, BAOBAB, SIPEM]
+          enum: [ BRED, MCB, BMOI, BOA, BGFI, AFG, ACCES_BANQUE, BAOBAB, SIPEM ]
         code_banque:
           type: string
           minLength: 5
@@ -306,7 +512,7 @@ components:
           example: Jean Rakoto
         service:
           type: string
-          enum: [Orange Money, Mvola, Airtel Money]
+          enum: [ Orange Money, Mvola, Airtel Money ]
           example: Mvola
         telephone:
           type: string
@@ -314,15 +520,65 @@ components:
 
     CompteMobileMoneyRequest:
       type: object
-      required: [titulaire, service, telephone]
+      required: [ titulaire, service, telephone ]
       properties:
         titulaire:
           type: string
         service:
           type: string
-          enum: [Orange Money, Mvola, Airtel Money]
+          enum: [ Orange Money, Mvola, Airtel Money ]
         telephone:
           type: string
+
+    Activite:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        titre:
+          type: string
+          example: Assemblée générale du mois d'avril
+        type:
+          type: string
+          enum: [ assemblee_generale, formation_junior, exceptionnelle, federation ]
+          example: assemblee_generale
+        date_activite:
+          type: string
+          format: date
+          example: '2026-04-27'
+        obligatoire:
+          type: boolean
+          example: true
+        cible:
+          type: string
+          example: tous
+        collectivite_id:
+          type: integer
+          example: 1
+        federation_id:
+          type: integer
+          example: null
+
+    ActiviteRequest:
+      type: object
+      required: [ titre, type, date_activite, obligatoire ]
+      properties:
+        titre:
+          type: string
+          example: Assemblée générale du mois d'avril
+        type:
+          type: string
+          enum: [ assemblee_generale, formation_junior, exceptionnelle, federation ]
+        date_activite:
+          type: string
+          format: date
+        obligatoire:
+          type: boolean
+        cible:
+          type: string
+          default: tous
+          example: juniors
 
     Error:
       type: object
