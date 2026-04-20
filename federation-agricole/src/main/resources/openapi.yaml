@@ -14,8 +14,6 @@ servers:
     description: Serveur de développement local
 
 tags:
-  - name: Trésorerie
-    description: Situation de trésorerie - comptes (Partie D)
   - name: Activités
     description: Activités des collectivités et de la fédération (Partie E)
   - name: Assiduité
@@ -24,174 +22,6 @@ tags:
     description: Rapports et statistiques (Partie G)
 
 paths:
-
-  /collectivites/{collectiviteId}/comptes:
-    get:
-      tags:
-        - Trésorerie
-      summary: Lister tous les comptes d'une collectivité
-      parameters:
-        - name: collectiviteId
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Liste des comptes
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Compte'
-        '404':
-          description: Collectivité non trouvée
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-    post:
-      tags:
-        - Trésorerie
-      summary: Ajouter un compte à une collectivité
-      parameters:
-        - name: collectiviteId
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CompteRequest'
-      responses:
-        '201':
-          description: Compte créé
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Compte'
-        '400':
-          description: Données invalides
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Collectivité non trouvée
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /collectivites/{collectiviteId}/comptes/{compteId}:
-    get:
-      tags:
-        - Trésorerie
-      summary: Détail d'un compte
-      parameters:
-        - name: collectiviteId
-          in: path
-          required: true
-          schema:
-            type: integer
-        - name: compteId
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Détail du compte
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Compte'
-        '404':
-          description: Compte ou collectivité non trouvé
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-    put:
-      tags:
-        - Trésorerie
-      summary: Mettre à jour le solde d'un compte
-      parameters:
-        - name: collectiviteId
-          in: path
-          required: true
-          schema:
-            type: integer
-        - name: compteId
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CompteUpdateRequest'
-      responses:
-        '200':
-          description: Compte mis à jour
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Compte'
-        '404':
-          description: Compte ou collectivité non trouvé
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /federation/comptes:
-    get:
-      tags:
-        - Trésorerie
-      summary: Lister tous les comptes de la fédération
-      responses:
-        '200':
-          description: Liste des comptes de la fédération
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Compte'
-
-    post:
-      tags:
-        - Trésorerie
-      summary: Ajouter un compte à la fédération
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CompteRequest'
-      responses:
-        '201':
-          description: Compte créé
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Compte'
-        '400':
-          description: Données invalides
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
   # PARTIE E
   /collectivites/{collectiviteId}/activites:
     get:
@@ -211,6 +41,12 @@ paths:
             type: string
             enum: [ assemblee_generale, formation_junior, exceptionnelle ]
           description: Filtrer par type d'activité
+        - name: obligatoire
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filtrer par caractère obligatoire
       responses:
         '200':
           description: Liste des activités
@@ -321,6 +157,12 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/Activite'
+          '400':
+            description: Données invalides
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
           '404':
             description: Activité ou collectivité non trouvée
             content:
@@ -364,7 +206,6 @@ paths:
             required: false
             schema:
               type: boolean
-            description: Filtrer par caractère obligatoire
         responses:
           '200':
             description: Liste des activités de la fédération
@@ -399,6 +240,80 @@ paths:
                 schema:
                   $ref: '#/components/schemas/Error'
 
+      /federation/activites/{activiteId}:
+        get:
+          tags:
+            - Activités
+          summary: Détail d'une activité de la fédération
+          parameters:
+            - name: activiteId
+              in: path
+              required: true
+              schema:
+                type: integer
+          responses:
+            '200':
+              description: Détail de l'activité
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/Activite'
+            '404':
+              description: Activité non trouvée
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/Error'
+
+        put:
+          tags:
+            - Activités
+          summary: Modifier une activité de la fédération
+          parameters:
+            - name: activiteId
+              in: path
+              required: true
+              schema:
+                type: integer
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ActiviteRequest'
+          responses:
+            '200':
+              description: Activité mise à jour
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/Activite'
+            '404':
+              description: Activité non trouvée
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/Error'
+
+        delete:
+          tags:
+            - Activités
+          summary: Supprimer une activité de la fédération
+          parameters:
+            - name: activiteId
+              in: path
+              required: true
+              schema:
+                type: integer
+          responses:
+            '204':
+              description: Activité supprimée
+            '404':
+              description: Activité non trouvée
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/Error'
 components:
   schemas:
     Compte:
