@@ -4,6 +4,7 @@ info:
   description: |
     Spécification OpenAPI pour la digitalisation de la fédération
     de collectivités agricoles de Madagascar.
+    Partie couverte : E (Activités), F (Assiduité), G (Statistiques)
   version: 1.0.0
   contact:
     name: Équipe de développement
@@ -22,7 +23,8 @@ tags:
     description: Rapports et statistiques (Partie G)
 
 paths:
-  # PARTIE E
+
+  # PARTIE E - ACTIVITES
   /collectivites/{collectiviteId}/activites:
     get:
       tags:
@@ -39,7 +41,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [ assemblee_generale, formation_junior, exceptionnelle ]
+            enum: [assemblee_generale, formation_junior, exceptionnelle]
           description: Filtrer par type d'activité
         - name: obligatoire
           in: query
@@ -99,351 +101,508 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-    /collectivites/{collectiviteId}/activites/{activiteId}:
-      get:
-        tags:
-          - Activités
-        summary: Détail d'une activité
-        parameters:
-          - name: collectiviteId
-            in: path
-            required: true
-            schema:
-              type: integer
-          - name: activiteId
-            in: path
-            required: true
-            schema:
-              type: integer
-        responses:
-          '200':
-            description: Détail de l'activité
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Activite'
-          '404':
-            description: Activité ou collectivité non trouvée
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
-
-      put:
-        tags:
-          - Activités
-        summary: Modifier une activité
-        parameters:
-          - name: collectiviteId
-            in: path
-            required: true
-            schema:
-              type: integer
-          - name: activiteId
-            in: path
-            required: true
-            schema:
-              type: integer
-        requestBody:
+  /collectivites/{collectiviteId}/activites/{activiteId}:
+    get:
+      tags:
+        - Activités
+      summary: Détail d'une activité
+      parameters:
+        - name: collectiviteId
+          in: path
           required: true
+          schema:
+            type: integer
+        - name: activiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détail de l'activité
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActiviteRequest'
-        responses:
-          '200':
-            description: Activité mise à jour
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Activite'
-          '400':
-            description: Données invalides
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
-          '404':
-            description: Activité ou collectivité non trouvée
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
-
-      delete:
-        tags:
-          - Activités
-        summary: Supprimer une activité
-        parameters:
-          - name: collectiviteId
-            in: path
-            required: true
-            schema:
-              type: integer
-          - name: activiteId
-            in: path
-            required: true
-            schema:
-              type: integer
-        responses:
-          '204':
-            description: Activité supprimée
-          '404':
-            description: Activité ou collectivité non trouvée
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
-
-    /federation/activites:
-      get:
-        tags:
-          - Activités
-        summary: Lister toutes les activités de la fédération
-        parameters:
-          - name: obligatoire
-            in: query
-            required: false
-            schema:
-              type: boolean
-        responses:
-          '200':
-            description: Liste des activités de la fédération
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Activite'
-
-      post:
-        tags:
-          - Activités
-        summary: Créer une activité au niveau de la fédération
-        requestBody:
-          required: true
+                $ref: '#/components/schemas/Activite'
+        '404':
+          description: Activité ou collectivité non trouvée
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActiviteRequest'
-        responses:
-          '201':
-            description: Activité créée
-            content:
-              application/json:
-                schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Activités
+      summary: Modifier une activité
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: activiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActiviteRequest'
+      responses:
+        '200':
+          description: Activité mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activite'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Activité ou collectivité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Activités
+      summary: Supprimer une activité
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: activiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Activité supprimée
+        '404':
+          description: Activité ou collectivité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /federation/activites:
+    get:
+      tags:
+        - Activités
+      summary: Lister toutes les activités de la fédération
+      parameters:
+        - name: obligatoire
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Liste des activités de la fédération
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
                   $ref: '#/components/schemas/Activite'
-          '400':
-            description: Données invalides
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
 
-      /federation/activites/{activiteId}:
-        get:
-          tags:
-            - Activités
-          summary: Détail d'une activité de la fédération
-          parameters:
-            - name: activiteId
-              in: path
-              required: true
+    post:
+      tags:
+        - Activités
+      summary: Créer une activité au niveau de la fédération
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActiviteRequest'
+      responses:
+        '201':
+          description: Activité créée
+          content:
+            application/json:
               schema:
-                type: integer
-          responses:
-            '200':
-              description: Détail de l'activité
-              content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/Activite'
-            '404':
-              description: Activité non trouvée
-              content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Activite'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
-        put:
-          tags:
-            - Activités
-          summary: Modifier une activité de la fédération
-          parameters:
-            - name: activiteId
-              in: path
-              required: true
+  /federation/activites/{activiteId}:
+    get:
+      tags:
+        - Activités
+      summary: Détail d'une activité de la fédération
+      parameters:
+        - name: activiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détail de l'activité
+          content:
+            application/json:
               schema:
-                type: integer
-          requestBody:
-            required: true
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/ActiviteRequest'
-          responses:
-            '200':
-              description: Activité mise à jour
-              content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/Activite'
-            '404':
-              description: Activité non trouvée
-              content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Activite'
+        '404':
+          description: Activité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
-        delete:
-          tags:
-            - Activités
-          summary: Supprimer une activité de la fédération
-          parameters:
-            - name: activiteId
-              in: path
-              required: true
+    put:
+      tags:
+        - Activités
+      summary: Modifier une activité de la fédération
+      parameters:
+        - name: activiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActiviteRequest'
+      responses:
+        '200':
+          description: Activité mise à jour
+          content:
+            application/json:
               schema:
-                type: integer
-          responses:
-            '204':
-              description: Activité supprimée
-            '404':
-              description: Activité non trouvée
-              content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Activite'
+        '404':
+          description: Activité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Activités
+      summary: Supprimer une activité de la fédération
+      parameters:
+        - name: activiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Activité supprimée
+        '404':
+          description: Activité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # PARTIE F - ASSIDUITE
+  /activites/{activiteId}/presences:
+    get:
+      tags:
+        - Assiduité
+      summary: Lister les présences d'une activité
+      parameters:
+        - name: activiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: present
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filtrer par présence effective
+      responses:
+        '200':
+          description: Liste des présences
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Presence'
+        '404':
+          description: Activité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Assiduité
+      summary: Enregistrer la feuille de présence d'une activité
+      parameters:
+        - name: activiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PresenceRequest'
+      responses:
+        '201':
+          description: Présences enregistrées
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Presence'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Activité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /activites/{activiteId}/presences/{membreId}:
+    put:
+      tags:
+        - Assiduité
+      summary: Modifier la présence d'un membre pour une activité
+      description: |
+        Permet au secrétaire de modifier la présence d'un membre
+        (ex: marquer comme excusé après coup)
+      parameters:
+        - name: activiteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: membreId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresenceRequest'
+      responses:
+        '200':
+          description: Présence mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presence'
+        '404':
+          description: Activité ou membre non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /membres/{membreId}/presences:
+    get:
+      tags:
+        - Assiduité
+      summary: Historique des présences d'un membre
+      parameters:
+        - name: membreId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: dateDebut
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Date de début de la période
+        - name: dateFin
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Date de fin de la période
+      responses:
+        '200':
+          description: Historique des présences
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Presence'
+        '404':
+          description: Membre non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # PARTIE G - STATISTIQUES
+  /collectivites/{collectiviteId}/statistiques:
+    get:
+      tags:
+        - Statistiques
+      summary: Statistiques globales d'une collectivité
+      description: |
+        Rapport mensuel du président vers la fédération.
+        Contient le taux d'assiduité global et le nombre de membres.
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: mois
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: Mois concerné (1-12)
+        - name: annee
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Année concernée
+      responses:
+        '200':
+          description: Statistiques globales de la collectivité
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatistiquesCollectivite'
+        '404':
+          description: Collectivité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /collectivites/{collectiviteId}/statistiques/membres:
+    get:
+      tags:
+        - Statistiques
+      summary: Statistiques détaillées par membre actif
+      description: |
+        Statistiques internes pour le président :
+        taux d'assiduité, montant encaissé et montant impayé
+        par membre actif sur une période donnée.
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: dateDebut
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Début de la période
+        - name: dateFin
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Fin de la période
+      responses:
+        '200':
+          description: Statistiques détaillées par membre
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StatistiquesMembre'
+        '404':
+          description: Collectivité non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /collectivites/{collectiviteId}/statistiques/membres/{membreId}:
+    get:
+      tags:
+        - Statistiques
+      summary: Statistiques détaillées d'un membre spécifique
+      parameters:
+        - name: collectiviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: membreId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: dateDebut
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: dateFin
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Statistiques du membre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatistiquesMembre'
+        '404':
+          description: Membre ou collectivité non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   schemas:
-    Compte:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        type:
-          type: string
-          enum: [ caisse, bancaire, mobile_money ]
-          example: bancaire
-        solde:
-          type: number
-          format: double
-          example: 1500000.00
-        date_solde:
-          type: string
-          format: date
-          example: '2026-04-20'
-        details:
-          oneOf:
-            - $ref: '#/components/schemas/CompteBancaire'
-            - $ref: '#/components/schemas/CompteMobileMoney'
-
-    CompteRequest:
-      type: object
-      required: [ type, solde, date_solde ]
-      properties:
-        type:
-          type: string
-          enum: [ caisse, bancaire, mobile_money ]
-        solde:
-          type: number
-          format: double
-        date_solde:
-          type: string
-          format: date
-        details:
-          oneOf:
-            - $ref: '#/components/schemas/CompteBancaireRequest'
-            - $ref: '#/components/schemas/CompteMobileMoneyRequest'
-
-    CompteUpdateRequest:
-      type: object
-      required: [ solde, date_solde ]
-      properties:
-        solde:
-          type: number
-          format: double
-          example: 2000000.00
-        date_solde:
-          type: string
-          format: date
-          example: '2026-04-20'
-
-    CompteBancaire:
-      type: object
-      properties:
-        titulaire:
-          type: string
-          example: Jean Rakoto
-        banque:
-          type: string
-          enum: [ BRED, MCB, BMOI, BOA, BGFI, AFG, ACCES_BANQUE, BAOBAB, SIPEM ]
-          example: BOA
-        code_banque:
-          type: string
-          example: '00001'
-        code_guichet:
-          type: string
-          example: '00001'
-        numero_compte:
-          type: string
-          example: '00000000001'
-        cle_rib:
-          type: string
-          example: '00'
-
-    CompteBancaireRequest:
-      type: object
-      required: [ titulaire, banque, code_banque, code_guichet, numero_compte, cle_rib ]
-      properties:
-        titulaire:
-          type: string
-        banque:
-          type: string
-          enum: [ BRED, MCB, BMOI, BOA, BGFI, AFG, ACCES_BANQUE, BAOBAB, SIPEM ]
-        code_banque:
-          type: string
-          minLength: 5
-          maxLength: 5
-        code_guichet:
-          type: string
-          minLength: 5
-          maxLength: 5
-        numero_compte:
-          type: string
-          minLength: 11
-          maxLength: 11
-        cle_rib:
-          type: string
-          minLength: 2
-          maxLength: 2
-
-    CompteMobileMoney:
-      type: object
-      properties:
-        titulaire:
-          type: string
-          example: Jean Rakoto
-        service:
-          type: string
-          enum: [ Orange Money, Mvola, Airtel Money ]
-          example: Mvola
-        telephone:
-          type: string
-          example: '0341234567'
-
-    CompteMobileMoneyRequest:
-      type: object
-      required: [ titulaire, service, telephone ]
-      properties:
-        titulaire:
-          type: string
-        service:
-          type: string
-          enum: [ Orange Money, Mvola, Airtel Money ]
-        telephone:
-          type: string
 
     Activite:
       type: object
@@ -453,10 +612,10 @@ components:
           example: 1
         titre:
           type: string
-          example: Assemblée générale du mois d'avril
+          example: Assemblée générale avril 2026
         type:
           type: string
-          enum: [ assemblee_generale, formation_junior, exceptionnelle, federation ]
+          enum: [assemblee_generale, formation_junior, exceptionnelle, federation]
           example: assemblee_generale
         date_activite:
           type: string
@@ -473,18 +632,19 @@ components:
           example: 1
         federation_id:
           type: integer
+          nullable: true
           example: null
 
     ActiviteRequest:
       type: object
-      required: [ titre, type, date_activite, obligatoire ]
+      required: [titre, type, date_activite, obligatoire]
       properties:
         titre:
           type: string
-          example: Assemblée générale du mois d'avril
+          example: Assemblée générale avril 2026
         type:
           type: string
-          enum: [ assemblee_generale, formation_junior, exceptionnelle, federation ]
+          enum: [assemblee_generale, formation_junior, exceptionnelle, federation]
         date_activite:
           type: string
           format: date
@@ -494,6 +654,110 @@ components:
           type: string
           default: tous
           example: juniors
+
+    Presence:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        activite_id:
+          type: integer
+          example: 1
+        membre_id:
+          type: integer
+          example: 5
+        present:
+          type: boolean
+          example: true
+        excusee:
+          type: boolean
+          example: false
+        motif_absence:
+          type: string
+          nullable: true
+          example: null
+
+    PresenceRequest:
+      type: object
+      required: [membre_id, present]
+      properties:
+        membre_id:
+          type: integer
+          example: 5
+        present:
+          type: boolean
+          example: true
+        excusee:
+          type: boolean
+          default: false
+        motif_absence:
+          type: string
+          nullable: true
+          example: Voyage professionnel
+
+    StatistiquesCollectivite:
+      type: object
+      properties:
+        collectivite_id:
+          type: integer
+          example: 1
+        nom_collectivite:
+          type: string
+          example: Collectivité Analamanga Nord
+        mois:
+          type: integer
+          example: 4
+        annee:
+          type: integer
+          example: 2026
+        nombre_membres:
+          type: integer
+          example: 45
+        taux_assiduite_global:
+          type: number
+          format: double
+          description: Taux en pourcentage
+          example: 87.5
+        nombre_activites:
+          type: integer
+          example: 3
+
+    StatistiquesMembre:
+      type: object
+      properties:
+        membre_id:
+          type: integer
+          example: 5
+        nom:
+          type: string
+          example: Rakoto
+        prenom:
+          type: string
+          example: Jean
+        taux_assiduite:
+          type: number
+          format: double
+          description: Taux en pourcentage sur la période
+          example: 75.0
+        montant_encaisse:
+          type: number
+          format: double
+          description: Total des cotisations payées sur la période
+          example: 150000.00
+        montant_impaye:
+          type: number
+          format: double
+          description: Total des cotisations non payées sur la période
+          example: 50000.00
+        periode_debut:
+          type: string
+          format: date
+          example: '2026-01-01'
+        periode_fin:
+          type: string
+          format: date
+          example: '2026-04-20'
 
     Error:
       type: object
