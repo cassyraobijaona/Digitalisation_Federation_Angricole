@@ -1459,7 +1459,7 @@ components:
 
     AdhesionAvecPaiementRequest:
       type: object
-      required: [ personne_id, parrains, mode_paiement, reference_transaction ]
+      required: [ personne_id, parrains, mode_paiement, reference_transaction_adhesion ]
       properties:
         personne_id:
           type: integer
@@ -1471,8 +1471,17 @@ components:
         mode_paiement:
           type: string
           enum: [ mobile_money, virement_bancaire ]
-        reference_transaction:
+        reference_transaction_adhesion:
           type: string
+          description: Référence du paiement des 50 000 Ar
+        paiements_cotisations:
+          type: array
+          description: |
+            Paiement des cotisations annuelles obligatoires imposées
+            par la collectivité. Le candidat doit payer l'intégralité
+            avant d'être admis.
+          items:
+            $ref: '#/components/schemas/PaiementCotisationAdhesionRequest'
 
     ParrainRequest:
       type: object
@@ -1480,6 +1489,7 @@ components:
       properties:
         membre_id:
           type: integer
+          example: 3
         nature_relation:
           type: string
           example: famille
@@ -1501,8 +1511,6 @@ components:
           type: string
           description: Référence du paiement de cette cotisation
           example: REF-COT-2026-001
-
-
     Compte:
       type: object
       properties:
