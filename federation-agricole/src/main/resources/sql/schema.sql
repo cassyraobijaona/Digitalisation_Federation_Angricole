@@ -48,13 +48,8 @@ CREATE TABLE compte (
                         collectivite_id INT,
                         federation_id INT,
                         solde NUMERIC(12,2) DEFAULT 0,
-
-                        CHECK (
-                            @@ -61,28 +60,28 @@
-
                         FOREIGN KEY (collectivite_id) REFERENCES collectivite(id),
-    FOREIGN KEY (federation_id) REFERENCES federation(id),
-    FOREIGN KEY (titulaire_id) REFERENCES personne(id)
+    FOREIGN KEY (federation_id) REFERENCES federation(id)
 );
 
 CREATE TYPE status_paiement as enum('en_cours','valide','rejete');
@@ -89,7 +84,7 @@ CREATE TABLE adhesion (
 CREATE TABLE membre (
                         id SERIAL PRIMARY KEY,
                         collectivite_id INT NOT NULL,
-                        parrain_id INT NOT NULL
+                        parrain_id INT NOT NULL,
                         adhesion_id INT UNIQUE NOT NULL,
                         FOREIGN KEY (parrain_id) REFERENCES membre(id) ON DELETE CASCADE,
                         FOREIGN KEY (collectivite_id) REFERENCES collectivite(id) ON DELETE CASCADE,
@@ -145,7 +140,7 @@ CREATE TABLE paiement_federation (
                                      compte_destination_id INT,
                                      FOREIGN KEY (collectivite_id) REFERENCES collectivite(id),
                                      FOREIGN KEY (federation_id) REFERENCES federation(id),
-                                     FOREIGN KEY (cotisation_id) REFERENCES cotisation(id)FOREIGN KEY (compte_source_id) REFERENCES compte(id),
+                                     FOREIGN KEY (cotisation_id) REFERENCES cotisation(id),
                                      FOREIGN KEY (compte_destination_id) REFERENCES compte(id),
                                      FOREIGN KEY (compte_source_id) REFERENCES compte(id)
 );
@@ -182,11 +177,11 @@ CREATE TABLE affectation_poste (
                                    FOREIGN KEY (mandat_id) REFERENCES mandat(id)
 );
 
-CREATE UNIQUE INDEX unique_poste_unique
+/*CREATE UNIQUE INDEX unique_poste_unique
     ON affectation_poste(role_id, mandat_id)
     WHERE role_id IN (
     SELECT id FROM role WHERE est_unique = TRUE
-);
+);*/
 
 CREATE TABLE compte_bancaire (
                                  id            SERIAL PRIMARY KEY,
