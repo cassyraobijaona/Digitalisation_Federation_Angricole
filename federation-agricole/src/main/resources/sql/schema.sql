@@ -6,8 +6,16 @@ CREATE TABLE ville (
 
 CREATE TABLE federation (
                             id               SERIAL PRIMARY KEY,
-                            nom              VARCHAR(150) NOT NULL,
-                            mandat_duree_ans INT NOT NULL DEFAULT 2
+                            nom              VARCHAR(150) NOT NULL
+                            /*mandat_duree_ans INT NOT NULL DEFAULT 2*/
+);
+
+CREATE TABLE autorisation_ouverture (
+                                        id                SERIAL PRIMARY KEY,
+                                        date_autorisation DATE        NOT NULL,
+                                        statut            VARCHAR(20) NOT NULL CHECK (statut IN (
+                                                                                                 'accordee', 'refusee', 'en_attente'
+                                            ))
 );
 
 CREATE TABLE collectivite (
@@ -49,8 +57,8 @@ CREATE TABLE compte (
     FOREIGN KEY (titulaire_id) REFERENCES personne(id)
 );
 
-CREATE TYPE status_paiement as enum('en_cours','valide','rejete')
-CREATE TYPE mode_paiement_adhesion as enum('virement','mobile_money'),
+CREATE TYPE status_paiement as enum('en_cours','valide','rejete');
+CREATE TYPE mode_paiement_adhesion as enum('virement','mobile_money');
 
 CREATE TABLE paiement_adhesion (
                                    id SERIAL PRIMARY KEY,
@@ -62,7 +70,7 @@ CREATE TABLE paiement_adhesion (
                                    date_paiement TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                    statut status_paiement,
                                    FOREIGN KEY (personne_id) REFERENCES personne(id) ON DELETE CASCADE,
-                                   FOREIGN KEY (compte_id) REFERENCES compte(id) ON DELETE CASCADE
+                                   FOREIGN KEY (compte_reception_id) REFERENCES compte(id) ON DELETE CASCADE
 );
 
 /* créer le tableau adhesion*/
@@ -81,7 +89,9 @@ CREATE TABLE adhesion (
 CREATE TABLE membre (
                         id SERIAL PRIMARY KEY,
                         collectivite_id INT NOT NULL,
+                        parrain_id INT NOT NULL
                         adhesion_id INT UNIQUE NOT NULL,
+                        FOREIGN KEY (parrain_id) REFERENCES membre(id) ON DELETE CASCADE,
                         FOREIGN KEY (collectivite_id) REFERENCES collectivite(id) ON DELETE CASCADE,
                         FOREIGN KEY (adhesion_id) REFERENCES adhesion(id) ON DELETE CASCADE
 );
@@ -105,7 +115,7 @@ CREATE TABLE cotisation (
 );
 
 /* tableau paiement-cotisation*/
-CREATE TYPE mode_paiement_cotisation as enum ('espece', 'bancaire', 'mobile_money')
+CREATE TYPE mode_paiement_cotisation as enum ('espece', 'bancaire', 'mobile_money');
 CREATE TABLE paiement_cotisation (
                                      id SERIAL PRIMARY KEY,
                                      membre_id INT NOT NULL,
@@ -118,7 +128,7 @@ CREATE TABLE paiement_cotisation (
                                      statut status_paiement not null ,
                                      FOREIGN KEY (membre_id) REFERENCES membre(id),
                                      FOREIGN KEY (cotisation_id) REFERENCES cotisation(id),
-                                     FOREIGN KEY (compte_id) REFERENCES compte(id)
+                                     FOREIGN KEY (compte_id_recepteur) REFERENCES compte(id)
 );
 
 /* creer la table pour gerer la paiement vers la federation,*/
@@ -136,7 +146,8 @@ CREATE TABLE paiement_federation (
                                      FOREIGN KEY (collectivite_id) REFERENCES collectivite(id),
                                      FOREIGN KEY (federation_id) REFERENCES federation(id),
                                      FOREIGN KEY (cotisation_id) REFERENCES cotisation(id)FOREIGN KEY (compte_source_id) REFERENCES compte(id),
-                                     FOREIGN KEY (compte_destination_id) REFERENCES compte(id)
+                                     FOREIGN KEY (compte_destination_id) REFERENCES compte(id),
+                                     FOREIGN KEY (compte_source_id) REFERENCES compte(id)
 );
 
 CREATE TABLE role (
@@ -205,14 +216,6 @@ CREATE TABLE caisse (
                         id        SERIAL PRIMARY KEY,
                         compte_id INT          NOT NULL UNIQUE REFERENCES compte(id),
                         titulaire VARCHAR(150) NOT NULL
-);
-
-CREATE TABLE autorisation_ouverture (
-                                        id                SERIAL PRIMARY KEY,
-                                        date_autorisation DATE        NOT NULL,
-                                        statut            VARCHAR(20) NOT NULL CHECK (statut IN (
-                                                                                                 'accordee', 'refusee', 'en_attente'
-                                            ))
 );
 
 CREATE TABLE activite (
