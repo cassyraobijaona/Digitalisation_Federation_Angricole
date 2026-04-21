@@ -42,7 +42,8 @@ tags:
     description: Présences aux activités (Partie F)
   - name: Statistiques
     description: Rapports et statistiques (Partie G)
-
+  - name: Statistiques Federation
+    description: Rapports et Statistiques Federation (Partie H)
 paths:
   #Villes
   /villes:
@@ -293,6 +294,15 @@ paths:
           description: Paiement invalide, parrainage invalide ou données manquantes
         '404':
           description: Collectivité non trouvée
+        '422':
+          description: >
+            Règles de parrainage non respectées — moins de 2 parrains confirmés,
+            parrains non confirmés, ancienneté insuffisante, ou ratio
+            collectivité/hors-collectivité non respecté.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Erreur serveur
           content:
@@ -1282,6 +1292,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  # PARTIE H -  Statistiques de la fédération
+  /federation/statistiques:
+    get:
+      tags:
+        - Statistiques Federation
+      summary: Rapport global mensuel et annuel de la fédération
+      description: |
+        Rapport établi par le secrétaire de la fédération.
+        Contient pour chaque collectivité : taux d'assiduité,
+        pourcentage de membres à jour dans leurs cotisations,
+        et nombre de nouveaux adhérents sur une période donnée.
+      parameters:
+        - name: dateDebut
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: dateFin
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Rapport global de la fédération
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatistiquesFederation'
+        '404':
+          description: Fédération non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
 components:
   schemas:
 
@@ -1411,17 +1459,30 @@ components:
 
     AdhesionAvecPaiementRequest:
       type: object
-      required: [personne_id, parrain_id, mode_paiement, reference_transaction]
+      required: [ personne_id, parrains, mode_paiement, reference_transaction ]
       properties:
         personne_id:
           type: integer
-        parrain_id:
-          type: integer
+        parrains:
+          type: array
+          minItems: 2
+          items:
+            $ref: '#/components/schemas/ParrainRequest'
         mode_paiement:
           type: string
-          enum: [mobile_money, virement_bancaire]
+          enum: [ mobile_money, virement_bancaire ]
         reference_transaction:
           type: string
+
+    ParrainRequest:
+      type: object
+      required: [ membre_id, nature_relation ]
+      properties:
+        membre_id:
+          type: integer
+        nature_relation:
+          type: string
+          example: famille
 
     Compte:
       type: object
@@ -1833,6 +1894,44 @@ components:
         periode_fin:
           type: string
           format: date
+
+    StatistiquesFederation:
+      type: object
+      properties:
+        periode_debut:
+          type: string
+          format: date
+          example: '2026-01-01'
+        periode_fin:
+          type: string
+          format: date
+          example: '2026-04-21'
+        rapport_collectivites:
+          type: array
+          items:
+            $ref: '#/components/schemas/RapportCollectivite'
+
+    RapportCollectivite:
+      type: object
+      properties:
+        collectivite_id:
+          type: integer
+        nom_collectivite:
+          type: string
+        taux_assiduite_global:
+          type: number
+          format: double
+          description: Taux en pourcentage sur la période
+          example: 87.5
+        pourcentage_cotisations_a_jour:
+          type: number
+          format: double
+          description: Pourcentage de membres à jour dans leurs cotisations
+          example: 92.0
+        nombre_nouveaux_adherents:
+          type: integer
+          description: Nombre de nouveaux membres sur la période
+          example: 12
 
     Error:
       type: object

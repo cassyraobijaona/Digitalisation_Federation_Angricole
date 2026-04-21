@@ -81,10 +81,17 @@ CREATE TABLE adhesion (
                           FOREIGN KEY (paiement_id) REFERENCES paiement_adhesion(id)
 );
 
+CREATE TABLE parrainage (
+                            id              SERIAL PRIMARY KEY,
+                            adhesion_id     INT         NOT NULL REFERENCES adhesion(id),
+                            parrain_id      INT         NOT NULL REFERENCES membre(id),
+                            nature_relation VARCHAR(50) NOT NULL,
+                            UNIQUE (adhesion_id, parrain_id)
+);
+
 CREATE TABLE membre (
                         id SERIAL PRIMARY KEY,
                         collectivite_id INT NOT NULL,
-                        parrain_id INT NOT NULL,
                         adhesion_id INT UNIQUE NOT NULL,
                         FOREIGN KEY (parrain_id) REFERENCES membre(id) ON DELETE CASCADE,
                         FOREIGN KEY (collectivite_id) REFERENCES collectivite(id) ON DELETE CASCADE,
