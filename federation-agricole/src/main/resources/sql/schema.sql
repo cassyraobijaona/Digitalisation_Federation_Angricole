@@ -15,6 +15,7 @@ CREATE TABLE collectivite (
                               numero              VARCHAR(20)  NOT NULL UNIQUE,
                               nom                 VARCHAR(150) NOT NULL UNIQUE,
                               specialite_agricole VARCHAR(100) NOT NULL,
+                              autorisation_id    int references  autorisation_ouverture(id),
                               date_creation       DATE         NOT NULL,
                               ville_id            INT          NOT NULL REFERENCES ville(id),
                               federation_id       INT          NOT NULL REFERENCES federation(id)
@@ -32,12 +33,148 @@ CREATE TABLE personne (
                           email          VARCHAR(150) NOT NULL UNIQUE
 );
 
+CREATE TYPE compte_type as enum('bancaire', 'mobile_money', 'caisse');
 CREATE TABLE compte (
-                        id         SERIAL PRIMARY KEY,
-                        type       VARCHAR(20)   NOT NULL CHECK (type IN ('bancaire', 'mobile_money', 'caisse')),
-                        solde      DECIMAL(15,2) NOT NULL DEFAULT 0,
-                        date_solde DATE          NOT NULL,
-                        personne_id INT          REFERENCES personne(id)
+                        id SERIAL PRIMARY KEY,
+                        type compte_type NOT NULL ,
+                        collectivite_id INT,
+                        federation_id INT,
+                        solde NUMERIC(12,2) DEFAULT 0,
+
+                        CHECK (
+                            @@ -61,28 +60,28 @@
+
+                        FOREIGN KEY (collectivite_id) REFERENCES collectivite(id),
+    FOREIGN KEY (federation_id) REFERENCES federation(id),
+    FOREIGN KEY (titulaire_id) REFERENCES personne(id)
+);
+
+CREATE TYPE status_paiement as enum('en_cours','valide','rejete')
+CREATE TYPE mode_paiement_adhesion as enum('virement','mobile_money'),
+
+CREATE TABLE paiement_adhesion (
+                                   id SERIAL PRIMARY KEY,
+                                   montant INT NOT NULL CHECK (montant = 50000),
+                                   personne_id INT NOT NULL,
+                                   compte_reception_id INT NOT NULL,/*compte du collectivite*/
+                                   mode_paiement mode_paiement_adhesion NOT NULL,
+                                   reference_transaction TEXT UNIQUE NOT NULL ,
+                                   date_paiement TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                   statut status_paiement,
+                                   FOREIGN KEY (personne_id) REFERENCES personne(id) ON DELETE CASCADE,
+                                   FOREIGN KEY (compte_id) REFERENCES compte(id) ON DELETE CASCADE
+);
+
+/* créer le tableau adhesion*/
+/* créer le type de status adhesion*/
+CREATE TYPE adhesion_status as enum('en_attente', 'valide', 'refuse');
+CREATE TABLE adhesion (
+                          id SERIAL PRIMARY KEY,
+                          collectivite_id INT NOT NULL,
+                          paiement_id INT UNIQUE,
+                          date_adhesion DATE DEFAULT CURRENT_DATE,
+                          statut adhesion_status not null ,
+                          FOREIGN KEY (collectivite_id) REFERENCES collectivite(id) ON DELETE CASCADE,
+                          FOREIGN KEY (paiement_id) REFERENCES paiement_adhesion(id)
+);
+
+CREATE TABLE membre (
+                        id SERIAL PRIMARY KEY,
+                        collectivite_id INT NOT NULL,
+                        adhesion_id INT UNIQUE NOT NULL,
+                        FOREIGN KEY (collectivite_id) REFERENCES collectivite(id) ON DELETE CASCADE,
+                        FOREIGN KEY (adhesion_id) REFERENCES adhesion(id) ON DELETE CASCADE
+);
+
+/* creer le tableau cotisation*/
+CREATE TYPE  cotisation_type as enum('mensuelle','annuelle','ponctuelle');
+CREATE TABLE cotisation (
+                            id SERIAL PRIMARY KEY,
+                            collectivite_id INT NOT NULL,
+                            federation_id int references federation(id),
+                            type cotisation_type not null ,
+                            montant INT NOT NULL,
+                            date_debut DATE,
+                            date_fin DATE,
+                            description TEXT,
+                            CHECK (
+                                (collectivite_id IS NOT NULL AND federation_id IS NULL) OR
+                                (federation_id IS NOT NULL AND collectivite_id IS NULL)
+                                ),
+                            FOREIGN KEY (collectivite_id) REFERENCES collectivite(id)
+);
+
+/* tableau paiement-cotisation*/
+CREATE TYPE mode_paiement_cotisation as enum ('espece', 'bancaire', 'mobile_money')
+CREATE TABLE paiement_cotisation (
+                                     id SERIAL PRIMARY KEY,
+                                     membre_id INT NOT NULL,
+                                     cotisation_id INT NOT NULL,
+                                     montant INT NOT NULL,
+                                     mode_paiement mode_paiement_cotisation NOT NULL,
+                                     compte_id_recepteur INT NOT NULL ,
+                                     reference_transaction VARCHAR(55),
+                                     date_paiement TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                     statut status_paiement not null ,
+                                     FOREIGN KEY (membre_id) REFERENCES membre(id),
+                                     FOREIGN KEY (cotisation_id) REFERENCES cotisation(id),
+                                     FOREIGN KEY (compte_id) REFERENCES compte(id)
+);
+
+/* creer la table pour gerer la paiement vers la federation,*/
+CREATE TABLE paiement_federation (
+                                     id SERIAL PRIMARY KEY,
+                                     collectivite_id INT NOT NULL,
+                                     federation_id INT NOT NULL,
+                                     cotisation_id INT NOT NULL,
+                                     montant_total INT NOT NULL,         -- total collecté
+                                     mode_paiement mode_paiement_cotisation NOT NULL,
+                                     reference_transaction TEXT UNIQUE,
+                                     date_paiement TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                     compte_source_id INT,
+                                     compte_destination_id INT,
+                                     FOREIGN KEY (collectivite_id) REFERENCES collectivite(id),
+                                     FOREIGN KEY (federation_id) REFERENCES federation(id),
+                                     FOREIGN KEY (cotisation_id) REFERENCES cotisation(id)FOREIGN KEY (compte_source_id) REFERENCES compte(id),
+                                     FOREIGN KEY (compte_destination_id) REFERENCES compte(id)
+);
+
+CREATE TABLE role (
+                      id SERIAL PRIMARY KEY,
+                      nom TEXT UNIQUE NOT NULL,
+                      est_unique BOOLEAN DEFAULT FALSE
+);
+CREATE TABLE mandat (
+                        id SERIAL PRIMARY KEY,
+                        collectivite_id INT,
+                        federation_id INT,
+                        date_debut DATE NOT NULL,
+                        date_fin DATE NOT NULL,
+
+                        CHECK (
+                            (collectivite_id IS NOT NULL AND federation_id IS NULL)
+                                OR
+                            (collectivite_id IS NULL AND federation_id IS NOT NULL)
+                            ),
+
+                        FOREIGN KEY (collectivite_id) REFERENCES collectivite(id),
+                        FOREIGN KEY (federation_id) REFERENCES federation(id)
+);
+CREATE TABLE affectation_poste (
+                                   id SERIAL PRIMARY KEY,
+                                   membre_id INT NOT NULL,
+                                   role_id INT NOT NULL,
+                                   mandat_id INT NOT NULL,
+
+                                   FOREIGN KEY (membre_id) REFERENCES membre(id),
+                                   FOREIGN KEY (role_id) REFERENCES role(id),
+                                   FOREIGN KEY (mandat_id) REFERENCES mandat(id)
+);
+
+CREATE UNIQUE INDEX unique_poste_unique
+    ON affectation_poste(role_id, mandat_id)
+    WHERE role_id IN (
+    SELECT id FROM role WHERE est_unique = TRUE
 );
 
 CREATE TABLE compte_bancaire (
@@ -70,146 +207,12 @@ CREATE TABLE caisse (
                         titulaire VARCHAR(150) NOT NULL
 );
 
-CREATE TABLE paiement_ad (
-                             id                    SERIAL PRIMARY KEY,
-                             montant               DECIMAL(15,2) NOT NULL DEFAULT 50000,
-                             personne_id           INT           NOT NULL REFERENCES personne(id),
-                             compte_id             INT           NOT NULL REFERENCES compte(id),
-                             mode_paiement         VARCHAR(20)   NOT NULL CHECK (mode_paiement IN (
-                                                                                                   'mobile_money', 'virement_bancaire'
-                                 )),
-                             reference_transaction VARCHAR(100)  NOT NULL UNIQUE,
-                             date_paiement         DATE          NOT NULL,
-                             statut                VARCHAR(20)   NOT NULL CHECK (statut IN (
-                                                                                            'en_cours', 'refuse', 'valide'
-                                 )),
-                             CHECK (montant = 50000)
-);
-
-CREATE TABLE adhesion (
-                          id              SERIAL PRIMARY KEY,
-                          date_adhesion   DATE        NOT NULL,
-                          paiement_ad_id  INT         NOT NULL UNIQUE REFERENCES paiement_ad(id),
-                          collectivite_id INT         NOT NULL REFERENCES collectivite(id),
-                          statut          VARCHAR(20) NOT NULL CHECK (statut IN (
-                                                                                 'accepte', 'en_attente', 'rejete'
-                              ))
-);
-
-CREATE TABLE membre (
-                        id          SERIAL PRIMARY KEY,
-                        adhesion_id INT NOT NULL UNIQUE REFERENCES adhesion(id),
-                        parrain_id  INT REFERENCES membre(id)
-);
-
-CREATE TABLE mandat (
-                        id              SERIAL PRIMARY KEY,
-                        collectivite_id INT         NOT NULL REFERENCES collectivite(id),
-                        membre_id       INT         NOT NULL REFERENCES membre(id),
-                        poste           VARCHAR(50) NOT NULL CHECK (poste IN (
-                                                                              'president', 'president_adjoint', 'tresorier',
-                                                                              'secretaire', 'membre_confirme', 'membre_junior'
-                            )),
-                        annee_civile    INT         NOT NULL,
-                        UNIQUE (collectivite_id, poste, annee_civile)
-);
-
-CREATE TABLE mandat_federation (
-                                   id           SERIAL PRIMARY KEY,
-                                   membre_id    INT         NOT NULL REFERENCES membre(id),
-                                   poste        VARCHAR(50) NOT NULL CHECK (poste IN (
-                                                                                      'president', 'president_adjoint', 'tresorier', 'secretaire'
-                                       )),
-                                   annee_debut  INT         NOT NULL,
-                                   annee_fin    INT         NOT NULL
-);
-
 CREATE TABLE autorisation_ouverture (
                                         id                SERIAL PRIMARY KEY,
-                                        collectivite_id   INT         NOT NULL UNIQUE REFERENCES collectivite(id),
                                         date_autorisation DATE        NOT NULL,
                                         statut            VARCHAR(20) NOT NULL CHECK (statut IN (
                                                                                                  'accordee', 'refusee', 'en_attente'
                                             ))
-);
-
-CREATE TABLE compte_institutionnel (
-                                       id              SERIAL PRIMARY KEY,
-                                       type            VARCHAR(20)   NOT NULL CHECK (type IN ('caisse', 'bancaire', 'mobile_money')),
-                                       solde           DECIMAL(15,2) NOT NULL DEFAULT 0,
-                                       date_solde      DATE          NOT NULL,
-                                       collectivite_id INT           REFERENCES collectivite(id),
-                                       federation_id   INT           REFERENCES federation(id),
-                                       CHECK (
-                                           (collectivite_id IS NOT NULL AND federation_id IS NULL) OR
-                                           (federation_id IS NOT NULL AND collectivite_id IS NULL)
-                                           )
-);
-
-CREATE TABLE paiement (
-                          id                   SERIAL PRIMARY KEY,
-                          compte_id_envoyeur   INT           NOT NULL REFERENCES compte(id),
-                          compte_id_recepteur  INT           NOT NULL REFERENCES compte_institutionnel(id),
-                          montant              DECIMAL(15,2) NOT NULL,
-                          date_paiement        DATE          NOT NULL
-);
-
-CREATE TABLE cotisation (
-                            id              SERIAL PRIMARY KEY,
-                            membre_id       INT           NOT NULL REFERENCES membre(id),
-                            collectivite_id INT           NOT NULL REFERENCES collectivite(id),
-                            periodicite     VARCHAR(20)   NOT NULL CHECK (periodicite IN (
-                                                                                          'mensuelle', 'annuelle', 'ponctuelle'
-                                )),
-                            montant         DECIMAL(15,2) NOT NULL,
-                            date_echeance   DATE          NOT NULL
-);
-
-CREATE TABLE compte_bancaire (
-                                 id           SERIAL PRIMARY KEY,
-                                 compte_id    INT          NOT NULL UNIQUE REFERENCES compte(id),
-                                 titulaire    VARCHAR(150) NOT NULL,
-                                 banque       VARCHAR(50)  NOT NULL CHECK (banque IN (
-                                                                                      'BRED','MCB','BMOI','BOA','BGFI',
-                                                                                      'AFG','ACCES_BANQUE','BAOBAB','SIPEM'
-                                     )),
-                                 code_banque  CHAR(5)  NOT NULL,
-                                 code_guichet CHAR(5)  NOT NULL,
-                                 numero_compte CHAR(11) NOT NULL,
-                                 cle_rib      CHAR(2)  NOT NULL
-);
-
-CREATE TABLE compte_mobile_money (
-                                     id         SERIAL PRIMARY KEY,
-                                     compte_id  INT         NOT NULL UNIQUE REFERENCES compte(id),
-                                     titulaire  VARCHAR(150) NOT NULL,
-                                     service    VARCHAR(30)  NOT NULL CHECK (service IN (
-                                                                                         'Orange Money', 'Mvola', 'Airtel Money'
-                                         )),
-                                     telephone  VARCHAR(20)  NOT NULL UNIQUE
-);
-
-CREATE TABLE cotisation (
-                            id              SERIAL PRIMARY KEY,
-                            membre_id       INT           NOT NULL REFERENCES membre(id),
-                            collectivite_id INT           NOT NULL REFERENCES collectivite(id),
-                            periodicite     VARCHAR(20)   NOT NULL CHECK (periodicite IN (
-                                                                                          'mensuelle', 'annuelle', 'ponctuelle'
-                                )),
-                            montant         DECIMAL(15,2) NOT NULL,
-                            date_echeance   DATE          NOT NULL
-);
-
-CREATE TABLE encaissement (
-                              id                    SERIAL PRIMARY KEY,
-                              cotisation_id         INT           NOT NULL REFERENCES cotisation(id),
-                              compte_institutionnel_id INT        NOT NULL REFERENCES compte_institutionnel(id),
-                              paiement_id           INT           NOT NULL REFERENCES paiement(id),
-                              montant               DECIMAL(15,2) NOT NULL,
-                              date_encaissement     DATE          NOT NULL,
-                              mode_paiement         VARCHAR(20)   NOT NULL CHECK (mode_paiement IN (
-                                                                                                    'espece', 'virement_bancaire', 'mobile_money'
-                                  ))
 );
 
 CREATE TABLE activite (
