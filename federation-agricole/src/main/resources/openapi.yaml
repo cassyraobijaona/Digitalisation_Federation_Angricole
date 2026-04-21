@@ -1484,6 +1484,25 @@ components:
           type: string
           example: famille
 
+    PaiementCotisationAdhesionRequest:
+      type: object
+      required: [ cotisation_id, montant, reference_transaction ]
+      properties:
+        cotisation_id:
+          type: integer
+          description: ID de la cotisation annuelle obligatoire de la collectivité
+          example: 1
+        montant:
+          type: number
+          format: double
+          description: Montant de la cotisation annuelle (ex 200 000 Ar)
+          example: 200000.00
+        reference_transaction:
+          type: string
+          description: Référence du paiement de cette cotisation
+          example: REF-COT-2026-001
+
+
     Compte:
       type: object
       properties:
