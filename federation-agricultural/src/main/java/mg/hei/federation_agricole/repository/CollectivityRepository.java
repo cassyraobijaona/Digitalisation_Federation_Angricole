@@ -1,34 +1,30 @@
 package mg.hei.federation_agricole.repository;
-
-import mg.hei.federation_agricole.config.DatabaseConnection;
 import org.springframework.stereotype.Repository;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @Repository
 public class CollectivityRepository {
 
-    private final DatabaseConnection db;
+    public int save(Connection conn, String location, boolean approval) throws SQLException {
 
-    public CollectivityRepository(DatabaseConnection db) {
-        this.db = db;
-    }
-
-    public int save(String location) throws SQLException {
         String sql = """
-            INSERT INTO collectivity
-            (number, name, agricultural_specialty, creation_date, city_id, federation_id)
-            VALUES (?, ?, 'Not defined', CURRENT_DATE, 1, 1)
+            INSERT INTO collectivity(location, federation_approval)
+            VALUES (?, ?)
             RETURNING id
         """;
-        try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            String number = "COLL-" + System.currentTimeMillis();
-            ps.setString(1, number);
-            ps.setString(2, location);
-            ResultSet rs = ps.executeQuery();
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, location);
+            stmt.setBoolean(2, approval);
+
+            ResultSet rs = stmt.executeQuery();
             rs.next();
-            return rs.getInt("id");
+            return rs.getInt(1);
         }
     }
 }

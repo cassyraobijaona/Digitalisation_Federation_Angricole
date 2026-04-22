@@ -9,4 +9,12 @@ public class CreateCollectivity {
     private List<String> members;
     private Boolean federationApproval;
     private CreateCollectivityStructure structure;
+    public boolean isFederationApproval() {
+        return federationApproval;
+    }
+
+    public void setFederationApproval(boolean federationApproval) {
+        this.federationApproval = federationApproval;
+    }
+
 }

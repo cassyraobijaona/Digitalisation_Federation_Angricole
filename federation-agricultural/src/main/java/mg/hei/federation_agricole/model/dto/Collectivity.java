@@ -5,8 +5,11 @@ import java.util.List;
 
 @Data
 public class Collectivity {
-    private String id;
+    private int id;
     private String location;
-    private CollectivityStructure structure;
+    private boolean federationApproval;
+
     private List<Member> members;
+
+    private CollectivityStructure structure;
 }

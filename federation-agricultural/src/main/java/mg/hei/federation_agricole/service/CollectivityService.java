@@ -1,137 +1,41 @@
-package mg.hei.federation_agricole.service;
-
-import mg.hei.federation_agricole.model.dto.*;
-import mg.hei.federation_agricole.repository.CollectivityRepository;
+package  mg.hei.federation_agricole.service;
+import mg.hei.federation_agricole.model.dto.CreateCollectivity;
+import mg.hei.federation_agricole.model.dto.Member;
 import mg.hei.federation_agricole.repository.MemberRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
 
 @Service
 public class CollectivityService {
 
-    private final CollectivityRepository collectivityRepository;
-    private final MemberRepository memberRepository;
+    private final MemberRepository memberRepo;
 
-    public CollectivityService(
-            CollectivityRepository collectivityRepository,
-            MemberRepository memberRepository) {
-        this.collectivityRepository = collectivityRepository;
-        this.memberRepository = memberRepository;
+    public CollectivityService(MemberRepository memberRepo) {
+        this.memberRepo = memberRepo;
     }
 
-    public List<Collectivity> createCollectivities(
-            List<CreateCollectivity> requests) {
+    public void validate(CreateCollectivity c, Connection conn) throws Exception {
 
-        List<Collectivity> result = new ArrayList<>();
+        if (!c.isFederationApproval())
+            throw new RuntimeException("No federation approval");
 
-        for (CreateCollectivity req : requests) {
+        if (c.getMembers().size() < 10)
+            throw new RuntimeException("Need 10 members");
 
-            // Federation approval check
-            if (req.getFederationApproval() == null
-                    || !req.getFederationApproval()) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Federation approval required");
-            }
+        int old = 0;
 
-            // Structure check
-            if (req.getStructure() == null) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Structure is required");
-            }
+        for (String id : c.getMembers()) {
 
-            // Minimum 10 members
-            if (req.getMembers() == null
-                    || req.getMembers().size() < 10) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "At least 10 members required");
-            }
+            Member m = memberRepo.findById(conn, Integer.parseInt(id));
 
-            // Resolve members
-            List<Member> members = new ArrayList<>();
-            for (String memberId : req.getMembers()) {
-                try {
-                    Member m = memberRepository.findById(memberId);
-                    if (m == null) {
-                        throw new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Member not found: " + memberId);
-                    }
-                    members.add(m);
-                } catch (SQLException e) {
-                    throw new ResponseStatusException(
-                            HttpStatus.INTERNAL_SERVER_ERROR,
-                            e.getMessage());
-                }
-            }
-
-            // Resolve structure
-            CollectivityStructure structure =
-                    resolveStructure(req.getStructure());
-
-            // Save collectivity
-            try {
-                int collectivityId =
-                        collectivityRepository.save(req.getLocation());
-
-                Collectivity collectivity = new Collectivity();
-                collectivity.setId(String.valueOf(collectivityId));
-                collectivity.setLocation(req.getLocation());
-                collectivity.setStructure(structure);
-                collectivity.setMembers(members);
-                result.add(collectivity);
-
-            } catch (SQLException e) {
-                throw new ResponseStatusException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        e.getMessage());
+            if (m.getAdhesionDate()
+                    .isBefore(java.time.LocalDate.now().minusMonths(6))) {
+                old++;
             }
         }
-        return result;
-    }
 
-    private CollectivityStructure resolveStructure(
-            CreateCollectivityStructure req) {
-        CollectivityStructure structure = new CollectivityStructure();
-        try {
-            if (req.getPresident() != null) {
-                Member m = memberRepository.findById(req.getPresident());
-                if (m == null) throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "President not found");
-                structure.setPresident(m);
-            }
-            if (req.getVicePresident() != null) {
-                Member m = memberRepository.findById(req.getVicePresident());
-                if (m == null) throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Vice president not found");
-                structure.setVicePresident(m);
-            }
-            if (req.getTreasurer() != null) {
-                Member m = memberRepository.findById(req.getTreasurer());
-                if (m == null) throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Treasurer not found");
-                structure.setTreasurer(m);
-            }
-            if (req.getSecretary() != null) {
-                Member m = memberRepository.findById(req.getSecretary());
-                if (m == null) throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Secretary not found");
-                structure.setSecretary(m);
-            }
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (SQLException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    e.getMessage());
-        }
-        return structure;
+        if (old < 5)
+            throw new RuntimeException("Need 5 senior members");
     }
 }
