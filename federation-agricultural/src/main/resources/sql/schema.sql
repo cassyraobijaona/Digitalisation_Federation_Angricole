@@ -92,6 +92,14 @@ CREATE TABLE collectivity_structure (
                                         FOREIGN KEY (treasurer_id) REFERENCES member(id),
                                         FOREIGN KEY (secretary_id) REFERENCES member(id)
 );
+CREATE TYPE owner_type_enum AS ENUM ('COLLECTIVITY','FEDERATION');
+CREATE TABLE financial_account (
+                                   id SERIAL PRIMARY KEY,
+                                   owner_type owner_type_enum, -- COLLECTIVITY / FEDERATION
+                                   owner_id INT,
+                                   amount NUMERIC(12,2)
+);
+
 CREATE TABLE membership_fee (
                                 id SERIAL PRIMARY KEY,
 
@@ -106,36 +114,31 @@ CREATE TABLE membership_fee (
 
                                 FOREIGN KEY (collectivity_id) REFERENCES collectivity(id)
 );
+
 CREATE TABLE member_payment (
                                 id SERIAL PRIMARY KEY,
 
                                 member_id INT,
                                 membership_fee_id INT,
 
+                                account_id INT,
+
                                 amount NUMERIC(12,2),
-
                                 payment_mode payment_mode_enum,
-
                                 creation_date DATE,
 
                                 FOREIGN KEY (member_id) REFERENCES member(id),
-                                FOREIGN KEY (membership_fee_id) REFERENCES membership_fee(id)
+                                FOREIGN KEY (membership_fee_id) REFERENCES membership_fee(id),
+                                FOREIGN KEY (account_id) REFERENCES financial_account(id)
 );
-CREATE TABLE financial_account (
-                                   id SERIAL PRIMARY KEY,
-
-                                   owner_type VARCHAR(20), -- COLLECTIVITY / FEDERATION
-                                   owner_id INT,
-
-                                   account_type VARCHAR(20), -- CASH / BANK / MOBILE
-
-                                   amount NUMERIC(12,2)
+CREATE TABLE cash_account (
+                              id INT PRIMARY KEY,
+                              FOREIGN KEY (id) REFERENCES financial_account(id)
 );
 CREATE TABLE bank_account (
-                              financial_account_id INT PRIMARY KEY,
+                              id INT PRIMARY KEY,
 
                               holder_name VARCHAR(150),
-
                               bank_name bank_enum,
 
                               bank_code INT,
@@ -143,35 +146,30 @@ CREATE TABLE bank_account (
                               bank_account_number BIGINT,
                               bank_account_key INT,
 
-                              FOREIGN KEY (financial_account_id)
-                                  REFERENCES financial_account(id)
+                              FOREIGN KEY (id) REFERENCES financial_account(id)
 );
 CREATE TABLE mobile_account (
-                                financial_account_id INT PRIMARY KEY,
+                                id INT PRIMARY KEY,
 
                                 holder_name VARCHAR(150),
-
                                 mobile_service mobile_service_enum,
-
                                 mobile_number BIGINT,
 
-                                FOREIGN KEY (financial_account_id)
-                                    REFERENCES financial_account(id)
+                                FOREIGN KEY (id) REFERENCES financial_account(id)
 );
 CREATE TABLE collectivity_transaction (
                                           id SERIAL PRIMARY KEY,
 
                                           collectivity_id INT,
                                           member_id INT,
-                                          financial_account_id INT,
+
+                                          account_id INT,
 
                                           amount NUMERIC(12,2),
-
                                           payment_mode payment_mode_enum,
-
                                           creation_date DATE,
 
                                           FOREIGN KEY (collectivity_id) REFERENCES collectivity(id),
                                           FOREIGN KEY (member_id) REFERENCES member(id),
-                                          FOREIGN KEY (financial_account_id) REFERENCES financial_account(id)
+                                          FOREIGN KEY (account_id) REFERENCES financial_account(id)
 );
