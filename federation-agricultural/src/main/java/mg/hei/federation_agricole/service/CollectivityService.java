@@ -1,23 +1,28 @@
 package  mg.hei.federation_agricole.service;
-import mg.hei.federation_agricole.model.dto.Collectivity;
-import mg.hei.federation_agricole.model.dto.CollectivityInformation;
-import mg.hei.federation_agricole.model.dto.CreateCollectivity;
-import mg.hei.federation_agricole.model.dto.Member;
+import mg.hei.federation_agricole.model.dto.*;
 import mg.hei.federation_agricole.repository.CollectivityRepository;
+import mg.hei.federation_agricole.repository.MemberPaymentRepository;
 import mg.hei.federation_agricole.repository.MemberRepository;
+import mg.hei.federation_agricole.repository.MembershipFeeRepository;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
+import java.util.List;
 
 @Service
 public class CollectivityService {
 
     private final MemberRepository memberRepo;
     private final CollectivityRepository collecRepo;
-    public CollectivityService(MemberRepository memberRepo, CollectivityRepository collecRepo) {
+    private final MembershipFeeRepository feeRepo;
+    private final MemberPaymentRepository paymentRepo;
+    public CollectivityService(MembershipFeeRepository feeRepo, MemberPaymentRepository paymentRepo,MemberRepository memberRepo, CollectivityRepository collecRepo) {
         this.memberRepo = memberRepo;
         this.collecRepo = collecRepo;
+        this.feeRepo = feeRepo;
+        this.paymentRepo = paymentRepo;
     }
+
 
     public void validate(CreateCollectivity c, Connection conn) throws Exception {
 
@@ -84,4 +89,15 @@ public class CollectivityService {
 
         return existing;
     }
+
+    public List<MembershipFee> getFees(int collectivityId) {
+        return feeRepo.findByCollectivity(collectivityId);
+    }
+
+    public void pay(MemberPayment payment) {
+        paymentRepo.save(payment);
+    }
+
+
+
 }

@@ -95,8 +95,12 @@ CREATE TABLE collectivity_structure (
 CREATE TYPE owner_type_enum AS ENUM ('COLLECTIVITY','FEDERATION');
 CREATE TABLE financial_account (
                                    id SERIAL PRIMARY KEY,
-                                   owner_type owner_type_enum, -- COLLECTIVITY / FEDERATION
+
+                                   owner_type owner_type_enum,
                                    owner_id INT,
+
+                                   account_type account_type_enum,
+
                                    amount NUMERIC(12,2)
 );
 

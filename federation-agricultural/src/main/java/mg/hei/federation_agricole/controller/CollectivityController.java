@@ -4,6 +4,7 @@ import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.model.dto.Collectivity;
 import mg.hei.federation_agricole.model.dto.CollectivityInformation;
 import mg.hei.federation_agricole.model.dto.CreateCollectivity;
+import mg.hei.federation_agricole.model.dto.MembershipFee;
 import mg.hei.federation_agricole.repository.CollectivityRepository;
 import mg.hei.federation_agricole.repository.RoleAssignmentRepository;
 import mg.hei.federation_agricole.service.CollectivityService;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Connection;
+import java.util.List;
 
 @RestController
 @RequestMapping("/collectivities")
@@ -90,4 +92,9 @@ public class CollectivityController {
         }
     }
 
+
+    @GetMapping("/{id}/membershipFees")
+    public List<MembershipFee> getFees(@PathVariable int id) {
+        return service.getFees(id);
+    }
 }
