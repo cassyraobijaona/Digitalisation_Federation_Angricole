@@ -134,4 +134,47 @@ public class CollectivityService {
         }
         return structure;
     }
+
+    public Collectivity assignIdentity(String collectivityId,
+                                       AssignIdentityRequest request) {
+        try {
+            int id = Integer.parseInt(collectivityId);
+
+            // Check collectivity exists
+            Collectivity existing = collectivityRepository.findById(id);
+            if (existing == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Collectivity not found");
+            }
+
+            // Check if number or name already assigned
+            if (existing.getNumber() != null || existing.getName() != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Number and name already assigned and cannot be changed");
+            }
+
+            // Check if name already exists
+            if (collectivityRepository.existsByName(request.getName())) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Name already exists in another collectivity");
+            }
+
+            // Assign identity
+            return collectivityRepository.assignIdentity(
+                    id,
+                    request.getNumber(),
+                    request.getName()
+            );
+
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (SQLException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    e.getMessage());
+        }
+    }
 }

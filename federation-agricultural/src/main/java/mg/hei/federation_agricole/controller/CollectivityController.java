@@ -1,5 +1,6 @@
 package mg.hei.federation_agricole.controller;
 
+import mg.hei.federation_agricole.model.dto.AssignIdentityRequest;
 import mg.hei.federation_agricole.model.dto.Collectivity;
 import mg.hei.federation_agricole.model.dto.CreateCollectivity;
 import mg.hei.federation_agricole.service.CollectivityService;
@@ -23,5 +24,12 @@ public class CollectivityController {
     public List<Collectivity> createCollectivities(
             @RequestBody List<CreateCollectivity> requests) {
         return collectivityService.createCollectivities(requests);
+    }
+
+    @PatchMapping("/{collectivityId}/identity")
+    public Collectivity assignIdentity(
+            @PathVariable String collectivityId,
+            @RequestBody AssignIdentityRequest request) {
+        return collectivityService.assignIdentity(collectivityId, request);
     }
 }
