@@ -1,6 +1,9 @@
 package  mg.hei.federation_agricole.service;
+import mg.hei.federation_agricole.model.dto.Collectivity;
+import mg.hei.federation_agricole.model.dto.CollectivityInformation;
 import mg.hei.federation_agricole.model.dto.CreateCollectivity;
 import mg.hei.federation_agricole.model.dto.Member;
+import mg.hei.federation_agricole.repository.CollectivityRepository;
 import mg.hei.federation_agricole.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
@@ -10,9 +13,10 @@ import java.sql.Connection;
 public class CollectivityService {
 
     private final MemberRepository memberRepo;
-
-    public CollectivityService(MemberRepository memberRepo) {
+    private final CollectivityRepository collecRepo;
+    public CollectivityService(MemberRepository memberRepo, CollectivityRepository collecRepo) {
         this.memberRepo = memberRepo;
+        this.collecRepo = collecRepo;
     }
 
     public void validate(CreateCollectivity c, Connection conn) throws Exception {
@@ -37,5 +41,47 @@ public class CollectivityService {
 
         if (old < 5)
             throw new RuntimeException("Need 5 senior members");
+    }
+    public void validateUpdate(Collectivity existing, CollectivityInformation input) {
+        System.out.println("EXISTING NUMBER = " + existing.getNumber());
+        System.out.println("INPUT NUMBER = " + input.getNumber());
+        if (input.getNumber() != null) {
+
+            if (existing.getNumber() == null) {
+                existing.setNumber(input.getNumber()); // 1ère fois OK
+            }
+            else if (!existing.getNumber().equals(input.getNumber())) {
+                throw new RuntimeException("NUMBER CANNOT BE MODIFIED");
+            }
+            if (input.getName() != null) {
+
+                if (existing.getName() == null) {
+                    existing.setName(input.getName());
+                }
+                else if (!existing.getName().equals(input.getName())) {
+                    throw new RuntimeException("NAME CANNOT BE MODIFIED");
+                }
+            }
+        }
+
+        // 🔥 NUMBER
+        if (input.getNumber() != null) {
+
+            if (existing.getNumber() == null) {
+                existing.setNumber(input.getNumber()); // première attribution OK
+            } else if (!input.getNumber().equals(existing.getNumber())) {
+                throw new RuntimeException("NUMBER CANNOT BE MODIFIED");
+            }
+        }
+    }
+    public Collectivity update(Collectivity existing, CollectivityInformation input, Connection conn) throws Exception {
+
+        validateUpdate(existing, input);
+
+        collecRepo.updateCollectivity(conn, existing);
+
+        conn.commit(); // 🔥 OBLIGATOIRE si autoCommit=false
+
+        return existing;
     }
 }

@@ -1,15 +1,14 @@
 package mg.hei.federation_agricole.controller;
 import mg.hei.federation_agricole.config.DatabaseConnection;
 
+import mg.hei.federation_agricole.model.dto.Collectivity;
+import mg.hei.federation_agricole.model.dto.CollectivityInformation;
 import mg.hei.federation_agricole.model.dto.CreateCollectivity;
 import mg.hei.federation_agricole.repository.CollectivityRepository;
 import mg.hei.federation_agricole.repository.RoleAssignmentRepository;
 import mg.hei.federation_agricole.service.CollectivityService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.sql.Connection;
 
@@ -63,4 +62,32 @@ public class CollectivityController {
 
         return ResponseEntity.status(201).body(ids);
     }
+    @PutMapping("/{id}/informations")
+    public ResponseEntity<?> update(@PathVariable int id,
+                                    @RequestBody CollectivityInformation input) {
+
+        try (Connection conn = db.getConnection()) {
+
+            Collectivity existing = collectivityRepo.findById(conn, id);
+
+            if (existing == null) {
+                return ResponseEntity.status(404).body("Collectivity not found");
+            }
+
+            service.validateUpdate(existing, input);
+
+            collectivityRepo.updateInfo(conn, id,
+                    input.getName() != null ? input.getName() : existing.getName(),
+                    true
+            );
+
+            return ResponseEntity.ok(existing);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("SERVER ERROR");
+        }
+    }
+
 }
