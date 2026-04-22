@@ -6,6 +6,8 @@ import java.util.List;
 @Data
 public class Collectivity {
     private String id;
+    private String number;
+    private String name;
     private String location;
     private CollectivityStructure structure;
     private List<Member> members;

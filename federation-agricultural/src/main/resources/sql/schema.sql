@@ -210,3 +210,9 @@ CREATE TABLE attendance (
                             absence_reason TEXT,
                             UNIQUE (activity_id, member_id)
 );
+
+/*
+Permettre que number et name soient NULL au départ
+ALTER TABLE collectivity ALTER COLUMN number DROP NOT NULL;
+ALTER TABLE collectivity ALTER COLUMN name DROP NOT NULL;
+*/
