@@ -1,218 +1,177 @@
-CREATE TABLE city (
-                      id     SERIAL PRIMARY KEY,
-                      name   VARCHAR(100) NOT NULL,
-                      region VARCHAR(100)
+CREATE TYPE gender_enum AS ENUM (
+    'MALE',
+    'FEMALE'
+);
+CREATE TYPE member_occupation_enum AS ENUM (
+    'JUNIOR',
+    'SENIOR',
+    'SECRETARY',
+    'TREASURER',
+    'VICE_PRESIDENT',
+    'PRESIDENT'
+);
+CREATE TYPE frequency_enum AS ENUM (
+    'WEEKLY',
+    'MONTHLY',
+    'ANNUALLY',
+    'PUNCTUALLY'
+);
+CREATE TYPE activity_status_enum AS ENUM (
+    'ACTIVE',
+    'INACTIVE'
+);
+CREATE TYPE payment_mode_enum AS ENUM (
+    'CASH',
+    'MOBILE_BANKING',
+    'BANK_TRANSFER'
+);
+CREATE TYPE bank_enum AS ENUM (
+    'BRED',
+    'MCB',
+    'BMOI',
+    'BOA',
+    'BGFI',
+    'AFG',
+    'ACCES_BAQUE',
+    'BAOBAB',
+    'SIPEM'
+);
+CREATE TYPE mobile_service_enum AS ENUM (
+    'AIRTEL_MONEY',
+    'MVOLA',
+    'ORANGE_MONEY'
 );
 
-CREATE TABLE federation (
-                            id   SERIAL PRIMARY KEY,
-                            name VARCHAR(150) NOT NULL
-);
-
-CREATE TABLE opening_authorization (
-                                       id                SERIAL PRIMARY KEY,
-                                       authorization_date DATE        NOT NULL,
-                                       status            VARCHAR(20) NOT NULL CHECK (status IN (
-                                                                                                'granted', 'refused', 'pending'
-                                           ))
-);
-
-CREATE TABLE collectivity (
-                              id                  SERIAL PRIMARY KEY,
-                              number              VARCHAR(20)  NOT NULL UNIQUE,
-                              name                VARCHAR(150) NOT NULL UNIQUE,
-                              agricultural_specialty VARCHAR(100) NOT NULL,
-                              authorization_id    INT          REFERENCES opening_authorization(id),
-                              creation_date       DATE         NOT NULL,
-                              city_id             INT          NOT NULL REFERENCES city(id),
-                              federation_id       INT          NOT NULL REFERENCES federation(id)
-);
-
-CREATE TABLE person (
-                        id             SERIAL PRIMARY KEY,
-                        last_name      VARCHAR(100) NOT NULL,
-                        first_name     VARCHAR(100) NOT NULL,
-                        birth_date     DATE         NOT NULL,
-                        gender         VARCHAR(10)  NOT NULL CHECK (gender IN ('MALE', 'FEMALE')),
-                        address        TEXT         NOT NULL,
-                        profession     VARCHAR(100) NOT NULL,
-                        phone_number   VARCHAR(20)  NOT NULL,
-                        email          VARCHAR(150) NOT NULL UNIQUE
-);
-
-CREATE TYPE account_type AS ENUM ('bank', 'mobile_money', 'cash');
-CREATE TYPE payment_status AS ENUM ('pending', 'validated', 'rejected');
-CREATE TYPE membership_payment_mode AS ENUM ('bank_transfer', 'mobile_money');
-CREATE TYPE membership_status AS ENUM ('pending', 'validated', 'refused');
-CREATE TYPE contribution_type AS ENUM ('monthly', 'annual', 'one_time');
-CREATE TYPE contribution_payment_mode AS ENUM ('cash', 'bank', 'mobile_money');
-
-CREATE TABLE account (
-                         id              SERIAL PRIMARY KEY,
-                         type            account_type  NOT NULL,
-                         collectivity_id INT           REFERENCES collectivity(id),
-                         federation_id   INT           REFERENCES federation(id),
-                         balance         NUMERIC(12,2) DEFAULT 0,
-                         CHECK (
-                             (collectivity_id IS NOT NULL AND federation_id IS NULL) OR
-                             (federation_id IS NOT NULL AND collectivity_id IS NULL)
-                             )
-);
-
-CREATE TABLE bank_account (
-                              id            SERIAL PRIMARY KEY,
-                              account_id    INT         NOT NULL UNIQUE REFERENCES account(id),
-                              holder        VARCHAR(150) NOT NULL,
-                              bank_name     VARCHAR(50)  NOT NULL CHECK (bank_name IN (
-                                                                                       'BRED','MCB','BMOI','BOA','BGFI',
-                                                                                       'AFG','ACCES_BANQUE','BAOBAB','SIPEM'
-                                  )),
-                              bank_code     CHAR(5)  NOT NULL,
-                              branch_code   CHAR(5)  NOT NULL,
-                              account_number CHAR(11) NOT NULL,
-                              rib_key       CHAR(2)  NOT NULL
-);
-
-CREATE TABLE mobile_money_account (
-                                      id           SERIAL PRIMARY KEY,
-                                      account_id   INT         NOT NULL UNIQUE REFERENCES account(id),
-                                      holder       VARCHAR(150) NOT NULL,
-                                      service      VARCHAR(30)  NOT NULL CHECK (service IN (
-                                                                                            'Orange Money', 'Mvola', 'Airtel Money'
-                                          )),
-                                      phone_number VARCHAR(20)  NOT NULL UNIQUE
-);
-
-CREATE TABLE cash_register (
-                               id         SERIAL PRIMARY KEY,
-                               account_id INT         NOT NULL UNIQUE REFERENCES account(id),
-                               holder     VARCHAR(150) NOT NULL
-);
-
-CREATE TABLE membership_payment (
-                                    id                    SERIAL PRIMARY KEY,
-                                    amount                INT  NOT NULL CHECK (amount = 50000),
-                                    person_id             INT  NOT NULL REFERENCES person(id) ON DELETE CASCADE,
-                                    receiving_account_id  INT  NOT NULL REFERENCES account(id) ON DELETE CASCADE,
-                                    payment_mode          membership_payment_mode NOT NULL,
-                                    transaction_reference TEXT NOT NULL UNIQUE,
-                                    payment_date          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                    status                payment_status NOT NULL
-);
-
-CREATE TABLE membership (
-                            id               SERIAL PRIMARY KEY,
-                            collectivity_id  INT NOT NULL REFERENCES collectivity(id) ON DELETE CASCADE,
-                            payment_id       INT UNIQUE   REFERENCES membership_payment(id),
-                            membership_date  DATE         DEFAULT CURRENT_DATE,
-                            status           membership_status NOT NULL
-);
 
 CREATE TABLE member (
-                        id               SERIAL PRIMARY KEY,
-                        collectivity_id  INT NOT NULL REFERENCES collectivity(id) ON DELETE CASCADE,
-                        membership_id    INT NOT NULL UNIQUE REFERENCES membership(id) ON DELETE CASCADE
-);
+                        id SERIAL PRIMARY KEY,
 
-CREATE TABLE sponsorship (
-                             id               SERIAL PRIMARY KEY,
-                             membership_id    INT         NOT NULL REFERENCES membership(id),
-                             sponsor_id       INT         NOT NULL REFERENCES member(id),
-                             relationship     VARCHAR(50) NOT NULL,
-                             UNIQUE (membership_id, sponsor_id)
-);
+                        first_name VARCHAR(100),
+                        last_name VARCHAR(100),
+                        birth_date DATE,
 
-CREATE TABLE role (
-                      id         SERIAL PRIMARY KEY,
-                      name       TEXT    NOT NULL UNIQUE,
-                      is_unique  BOOLEAN DEFAULT FALSE
-);
+                        gender gender_enum,
 
-CREATE TABLE mandate (
-                         id               SERIAL PRIMARY KEY,
-                         collectivity_id  INT REFERENCES collectivity(id),
-                         federation_id    INT REFERENCES federation(id),
-                         start_date       DATE NOT NULL,
-                         end_date         DATE NOT NULL,
-                         CHECK (
-                             (collectivity_id IS NOT NULL AND federation_id IS NULL) OR
-                             (collectivity_id IS NULL AND federation_id IS NOT NULL)
-                             )
-);
+                        address TEXT,
+                        profession VARCHAR(100),
+                        phone_number BIGINT,
+                        email VARCHAR(150),
 
-CREATE TABLE position_assignment (
-                                     id           SERIAL PRIMARY KEY,
-                                     member_id    INT NOT NULL REFERENCES member(id),
-                                     role_id      INT NOT NULL REFERENCES role(id),
-                                     mandate_id   INT NOT NULL REFERENCES mandate(id)
+                        occupation member_occupation_enum
 );
+CREATE TABLE collectivity (
+                              id SERIAL PRIMARY KEY,
 
-CREATE TABLE contribution (
-                              id               SERIAL PRIMARY KEY,
-                              collectivity_id  INT REFERENCES collectivity(id),
-                              federation_id    INT REFERENCES federation(id),
-                              type             contribution_type NOT NULL,
-                              amount           INT  NOT NULL,
-                              start_date       DATE,
-                              end_date         DATE,
-                              description      TEXT,
-                              CHECK (
-                                  (collectivity_id IS NOT NULL AND federation_id IS NULL) OR
-                                  (federation_id IS NOT NULL AND collectivity_id IS NULL)
-                                  )
+                              name VARCHAR(150) UNIQUE,
+                              number INT UNIQUE,
+                              location VARCHAR(150),
+
+                              federation_approval BOOLEAN NOT NULL
 );
+CREATE TABLE collectivity_member (
+                                     collectivity_id INT,
+                                     member_id INT,
 
-CREATE TABLE contribution_payment (
-                                      id                    SERIAL PRIMARY KEY,
-                                      member_id             INT NOT NULL REFERENCES member(id),
-                                      contribution_id       INT NOT NULL REFERENCES contribution(id),
-                                      amount                INT NOT NULL,
-                                      payment_mode          contribution_payment_mode NOT NULL,
-                                      receiving_account_id  INT NOT NULL REFERENCES account(id),
-                                      transaction_reference VARCHAR(55),
-                                      payment_date          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                      status                payment_status NOT NULL
+                                     PRIMARY KEY (collectivity_id, member_id),
+
+                                     FOREIGN KEY (collectivity_id) REFERENCES collectivity(id),
+                                     FOREIGN KEY (member_id) REFERENCES member(id)
 );
+CREATE TABLE collectivity_structure (
+                                        id SERIAL PRIMARY KEY,
+                                        collectivity_id INT UNIQUE,
 
-CREATE TABLE federation_payment (
-                                    id                    SERIAL PRIMARY KEY,
-                                    collectivity_id       INT NOT NULL REFERENCES collectivity(id),
-                                    federation_id         INT NOT NULL REFERENCES federation(id),
-                                    contribution_id       INT NOT NULL REFERENCES contribution(id),
-                                    total_amount          INT NOT NULL,
-                                    payment_mode          contribution_payment_mode NOT NULL,
-                                    transaction_reference TEXT UNIQUE,
-                                    payment_date          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                    source_account_id     INT REFERENCES account(id),
-                                    destination_account_id INT REFERENCES account(id)
+                                        president_id INT,
+                                        vice_president_id INT,
+                                        treasurer_id INT,
+                                        secretary_id INT,
+
+                                        FOREIGN KEY (collectivity_id) REFERENCES collectivity(id),
+                                        FOREIGN KEY (president_id) REFERENCES member(id),
+                                        FOREIGN KEY (vice_president_id) REFERENCES member(id),
+                                        FOREIGN KEY (treasurer_id) REFERENCES member(id),
+                                        FOREIGN KEY (secretary_id) REFERENCES member(id)
 );
+CREATE TABLE membership_fee (
+                                id SERIAL PRIMARY KEY,
 
-CREATE TABLE activity (
-                          id               SERIAL PRIMARY KEY,
-                          title            VARCHAR(200) NOT NULL,
-                          type             VARCHAR(30)  NOT NULL CHECK (type IN (
-                                                                                 'general_assembly', 'junior_training',
-                                                                                 'exceptional', 'federation'
-                              )),
-                          activity_date    DATE    NOT NULL,
-                          mandatory        BOOLEAN NOT NULL DEFAULT TRUE,
-                          target           VARCHAR(50) DEFAULT 'all',
-                          collectivity_id  INT REFERENCES collectivity(id),
-                          federation_id    INT REFERENCES federation(id)
+                                collectivity_id INT,
+
+                                eligible_from DATE,
+                                frequency frequency_enum,
+                                amount NUMERIC(12,2),
+                                label VARCHAR(150),
+
+                                status activity_status_enum,
+
+                                FOREIGN KEY (collectivity_id) REFERENCES collectivity(id)
 );
+CREATE TABLE member_payment (
+                                id SERIAL PRIMARY KEY,
 
-CREATE TABLE attendance (
-                            id            SERIAL PRIMARY KEY,
-                            activity_id   INT     NOT NULL REFERENCES activity(id),
-                            member_id     INT     NOT NULL REFERENCES member(id),
-                            present       BOOLEAN NOT NULL DEFAULT FALSE,
-                            excused       BOOLEAN NOT NULL DEFAULT FALSE,
-                            absence_reason TEXT,
-                            UNIQUE (activity_id, member_id)
+                                member_id INT,
+                                membership_fee_id INT,
+
+                                amount NUMERIC(12,2),
+
+                                payment_mode payment_mode_enum,
+
+                                creation_date DATE,
+
+                                FOREIGN KEY (member_id) REFERENCES member(id),
+                                FOREIGN KEY (membership_fee_id) REFERENCES membership_fee(id)
 );
+CREATE TABLE financial_account (
+                                   id SERIAL PRIMARY KEY,
 
-/*
-Permettre que number et name soient NULL au départ
-ALTER TABLE collectivity ALTER COLUMN number DROP NOT NULL;
-ALTER TABLE collectivity ALTER COLUMN name DROP NOT NULL;
-*/
+                                   owner_type VARCHAR(20), -- COLLECTIVITY / FEDERATION
+                                   owner_id INT,
+
+                                   account_type VARCHAR(20), -- CASH / BANK / MOBILE
+
+                                   amount NUMERIC(12,2)
+);
+CREATE TABLE bank_account (
+                              financial_account_id INT PRIMARY KEY,
+
+                              holder_name VARCHAR(150),
+
+                              bank_name bank_enum,
+
+                              bank_code INT,
+                              bank_branch_code INT,
+                              bank_account_number BIGINT,
+                              bank_account_key INT,
+
+                              FOREIGN KEY (financial_account_id)
+                                  REFERENCES financial_account(id)
+);
+CREATE TABLE mobile_account (
+                                financial_account_id INT PRIMARY KEY,
+
+                                holder_name VARCHAR(150),
+
+                                mobile_service mobile_service_enum,
+
+                                mobile_number BIGINT,
+
+                                FOREIGN KEY (financial_account_id)
+                                    REFERENCES financial_account(id)
+);
+CREATE TABLE collectivity_transaction (
+                                          id SERIAL PRIMARY KEY,
+
+                                          collectivity_id INT,
+                                          member_id INT,
+                                          financial_account_id INT,
+
+                                          amount NUMERIC(12,2),
+
+                                          payment_mode payment_mode_enum,
+
+                                          creation_date DATE,
+
+                                          FOREIGN KEY (collectivity_id) REFERENCES collectivity(id),
+                                          FOREIGN KEY (member_id) REFERENCES member(id),
+                                          FOREIGN KEY (financial_account_id) REFERENCES financial_account(id)
+);
