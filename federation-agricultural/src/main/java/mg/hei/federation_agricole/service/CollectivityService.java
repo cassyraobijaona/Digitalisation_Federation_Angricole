@@ -48,34 +48,27 @@ public class CollectivityService {
             throw new RuntimeException("Need 5 senior members");
     }
     public void validateUpdate(Collectivity existing, CollectivityInformation input) {
+
+        System.out.println("EXISTING NAME = " + existing.getName());
+        System.out.println("INPUT NAME = " + input.getName());
         System.out.println("EXISTING NUMBER = " + existing.getNumber());
         System.out.println("INPUT NUMBER = " + input.getNumber());
-        if (input.getNumber() != null) {
-
-            if (existing.getNumber() == null) {
-                existing.setNumber(input.getNumber()); // 1ère fois OK
-            }
-            else if (!existing.getNumber().equals(input.getNumber())) {
-                throw new RuntimeException("NUMBER CANNOT BE MODIFIED");
-            }
-            if (input.getName() != null) {
-
-                if (existing.getName() == null) {
-                    existing.setName(input.getName());
-                }
-                else if (!existing.getName().equals(input.getName())) {
-                    throw new RuntimeException("NAME CANNOT BE MODIFIED");
-                }
-            }
-        }
 
         // 🔥 NUMBER
         if (input.getNumber() != null) {
 
-            if (existing.getNumber() == null) {
-                existing.setNumber(input.getNumber()); // première attribution OK
-            } else if (!input.getNumber().equals(existing.getNumber())) {
+            if (existing.getNumber() != null &&
+                    !input.getNumber().equals(existing.getNumber())) {
                 throw new RuntimeException("NUMBER CANNOT BE MODIFIED");
+            }
+        }
+
+        // 🔥 NAME
+        if (input.getName() != null) {
+
+            if (existing.getName() != null &&
+                    !input.getName().equals(existing.getName())) {
+                throw new RuntimeException("NAME CANNOT BE MODIFIED");
             }
         }
     }
@@ -83,7 +76,7 @@ public class CollectivityService {
 
         validateUpdate(existing, input);
 
-        collecRepo.updateCollectivity(conn, existing);
+        collecRepo.updateCollectivity( existing);
 
         conn.commit(); // 🔥 OBLIGATOIRE si autoCommit=false
 

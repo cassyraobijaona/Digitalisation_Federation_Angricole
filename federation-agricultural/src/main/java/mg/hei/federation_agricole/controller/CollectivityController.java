@@ -70,7 +70,9 @@ public class CollectivityController {
 
         try (Connection conn = db.getConnection()) {
 
-            Collectivity existing = collectivityRepo.findById(conn, id);
+            conn.setAutoCommit(false);
+
+            Collectivity existing = collectivityRepo.findById( id);
 
             if (existing == null) {
                 return ResponseEntity.status(404).body("Collectivity not found");
@@ -78,17 +80,25 @@ public class CollectivityController {
 
             service.validateUpdate(existing, input);
 
-            collectivityRepo.updateInfo(conn, id,
-                    input.getName() != null ? input.getName() : existing.getName(),
-                    true
-            );
+            if (input.getName() != null) {
+                existing.setName(input.getName());
+            }
 
-            return ResponseEntity.ok(existing);
+            if (input.getNumber() != null) {
+                existing.setNumber(input.getNumber());
+            }
 
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(400).body(e.getMessage());
+            collectivityRepo.updateCollectivity( existing);
+
+            conn.commit();
+
+            Collectivity updated = collectivityRepo.findById( id);
+
+            return ResponseEntity.ok(updated);
+
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("SERVER ERROR");
+            e.printStackTrace(); // 🔥 IMPORTANT
+            return ResponseEntity.status(500).body(e.getMessage());
         }
     }
 
