@@ -43,7 +43,7 @@ public class MemberRepository {
 
     public Member findById(Connection conn, int id) throws SQLException {
 
-        String sql = "SELECT * FROM member WHERE id=?";
+        String sql = "SELECT id,occupation,adhesion_date FROM member WHERE id=?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
