@@ -9,7 +9,7 @@ import java.sql.SQLException;
 @Repository
 public class RoleAssignmentRepository {
 
-    public void assign(Connection conn, int collectivityId, int memberId, String role) throws SQLException {
+    public void assign(Connection conn, Integer collectivityId, Integer memberId, String role) throws SQLException {
 
         String sql = """
             INSERT INTO role_assignment(collectivity_id, member_id, role, year)

@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Member extends MemberInformation {
-    private int id;
+    private Integer id;
     private String firstName;
     private String lastName;
     private LocalDate birthDate;

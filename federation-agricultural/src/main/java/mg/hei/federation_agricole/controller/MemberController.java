@@ -44,7 +44,7 @@ public class MemberController {
 
                 service.validate(m, conn);
 
-                int id = memberRepo.save(conn, m);
+                Integer id = memberRepo.save( m);
 
                 refereeRepo.save(conn, id, m.getReferees());
 

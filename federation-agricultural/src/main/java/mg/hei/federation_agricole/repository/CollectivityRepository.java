@@ -1,4 +1,5 @@
 package mg.hei.federation_agricole.repository;
+import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.model.dto.Collectivity;
 import org.springframework.stereotype.Repository;
 
@@ -9,8 +10,11 @@ import java.sql.SQLException;
 
 @Repository
 public class CollectivityRepository {
-
-    public int save(Connection conn, String location, boolean approval) throws SQLException {
+    private final DatabaseConnection databaseConnection;
+    public CollectivityRepository(DatabaseConnection databaseConnection) {
+        this.databaseConnection = databaseConnection;
+    }
+    public Integer save( String location, boolean approval) throws SQLException {
 
         String sql = """
             INSERT INTO collectivity(location, federation_approval)
@@ -18,8 +22,8 @@ public class CollectivityRepository {
             RETURNING id
         """;
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try (Connection conn = databaseConnection.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, location);
             stmt.setBoolean(2, approval);
 
@@ -28,12 +32,12 @@ public class CollectivityRepository {
             return rs.getInt(1);
         }
     }
-    public Collectivity findById(Connection conn, int id) throws SQLException {
+    public Collectivity findById(Integer id) throws SQLException {
 
-        String sql = "SELECT * FROM collectivity WHERE id=?";
+        String sql = "SELECT id,name,location,number, federation_approval FROM collectivity WHERE id=?";
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try (Connection conn = databaseConnection.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, id);
 
             ResultSet rs = stmt.executeQuery();
@@ -42,13 +46,15 @@ public class CollectivityRepository {
 
             Collectivity c = new Collectivity();
             c.setId(rs.getInt("id"));
-            c.setName(rs.getString("name"));
-            c.setNumber(rs.getObject("number", Integer.class));
+            c.setName(rs.getString("name")); // 🔥 MISSING
+            c.setNumber(rs.getObject("number", Integer.class)); // 🔥 MISSING
+            c.setLocation(rs.getString("location"));
+            c.setFederationApproval(rs.getBoolean("federation_approval"));
 
             return c;
         }
     }
-    public void updateInfo(Connection conn, int id, String location, boolean approval) throws SQLException {
+   /* public void updateInfo(Connection conn, Integer id, String location, boolean approval) throws SQLException {
 
         String sql = """
         UPDATE collectivity
@@ -64,18 +70,24 @@ public class CollectivityRepository {
 
             stmt.executeUpdate();
         }
-    }
-    public void updateCollectivity(Connection conn, Collectivity c) throws SQLException {
+    }*/
+   public void updateCollectivity( Collectivity c) throws SQLException {
 
-        String sql = "UPDATE collectivity SET name=?, number=?, location=? WHERE id=?";
+       String sql = "UPDATE collectivity SET name=?, number=?, location=? WHERE id=?";
 
-        PreparedStatement ps = conn.prepareStatement(sql);
+       try (Connection conn = databaseConnection.getConnection()) {
+           PreparedStatement ps = conn.prepareStatement(sql);
+           ps.setString(1, c.getName());
+           ps.setObject(2, c.getNumber());
+           ps.setString(3, c.getLocation());
+           ps.setInt(4, c.getId());
 
-        ps.setString(1, c.getName());
-        ps.setObject(2, c.getNumber()); // important Integer safe
-        ps.setString(3, c.getLocation());
-        ps.setInt(4, c.getId());
+           int rows = ps.executeUpdate();
+           System.out.println("ROWS UPDATED = " + rows);
 
-        ps.executeUpdate(); // 🔥 OBLIGATOIRE
-    }
+           if (rows == 0) {
+               throw new RuntimeException("UPDATE FAILED: ID NOT FOUND");
+           }
+       }
+   }
 }

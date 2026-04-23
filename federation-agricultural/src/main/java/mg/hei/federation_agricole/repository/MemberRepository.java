@@ -1,4 +1,5 @@
 package mg.hei.federation_agricole.repository;
+import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.model.dto.CreateMember;
 import mg.hei.federation_agricole.model.dto.Member;
 import mg.hei.federation_agricole.model.enums.MemberOccupation;
@@ -8,8 +9,11 @@ import java.sql.*;
 
 @Repository
 public class MemberRepository {
-
-    public int save(Connection conn, mg.hei.federation_agricole.model.dto.CreateMember m) throws SQLException {
+    private final DatabaseConnection databaseConnection;
+    public MemberRepository(DatabaseConnection databaseConnection) {
+        this.databaseConnection = databaseConnection;
+    }
+    public Integer save( mg.hei.federation_agricole.model.dto.CreateMember m) throws SQLException {
 
         String sql = """
             INSERT INTO member(
@@ -19,8 +23,8 @@ public class MemberRepository {
             RETURNING id
         """;
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try (Connection conn = databaseConnection.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, m.getFirstName());
             stmt.setString(2, m.getLastName());
             stmt.setDate(3, Date.valueOf(m.getBirthDate()));
@@ -39,7 +43,7 @@ public class MemberRepository {
 
     public Member findById(Connection conn, int id) throws SQLException {
 
-        String sql = "SELECT * FROM member WHERE id=?";
+        String sql = "SELECT id,occupation,adhesion_date FROM member WHERE id=?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 

@@ -4,6 +4,7 @@ import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.model.dto.Collectivity;
 import mg.hei.federation_agricole.model.dto.CollectivityInformation;
 import mg.hei.federation_agricole.model.dto.CreateCollectivity;
+import mg.hei.federation_agricole.model.dto.MembershipFee;
 import mg.hei.federation_agricole.repository.CollectivityRepository;
 import mg.hei.federation_agricole.repository.RoleAssignmentRepository;
 import mg.hei.federation_agricole.service.CollectivityService;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Connection;
+import java.util.List;
 
 @RestController
 @RequestMapping("/collectivities")
@@ -44,7 +46,7 @@ public class CollectivityController {
 
                 service.validate(c, conn);
 
-                int id = collectivityRepo.save(conn, c.getLocation(), c.isFederationApproval());
+                Integer id = collectivityRepo.save(c.getLocation(), c.isFederationApproval());
 
                 roleRepo.assign(conn, id, Integer.parseInt(c.getStructure().getPresident()), "PRESIDENT");
                 roleRepo.assign(conn, id, Integer.parseInt(c.getStructure().getVicePresident()), "VICE_PRESIDENT");
@@ -63,12 +65,14 @@ public class CollectivityController {
         return ResponseEntity.status(201).body(ids);
     }
     @PutMapping("/{id}/informations")
-    public ResponseEntity<?> update(@PathVariable int id,
+    public ResponseEntity<?> update(@PathVariable Integer id,
                                     @RequestBody CollectivityInformation input) {
 
         try (Connection conn = db.getConnection()) {
 
-            Collectivity existing = collectivityRepo.findById(conn, id);
+            conn.setAutoCommit(false);
+
+            Collectivity existing = collectivityRepo.findById( id);
 
             if (existing == null) {
                 return ResponseEntity.status(404).body("Collectivity not found");
@@ -76,18 +80,38 @@ public class CollectivityController {
 
             service.validateUpdate(existing, input);
 
-            collectivityRepo.updateInfo(conn, id,
-                    input.getName() != null ? input.getName() : existing.getName(),
-                    true
-            );
+            if (input.getName() != null) {
+                existing.setName(input.getName());
+            }
 
-            return ResponseEntity.ok(existing);
+            if (input.getNumber() != null) {
+                existing.setNumber(input.getNumber());
+            }
 
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(400).body(e.getMessage());
+            collectivityRepo.updateCollectivity( existing);
+
+            conn.commit();
+
+            Collectivity updated = collectivityRepo.findById( id);
+
+            return ResponseEntity.ok(updated);
+
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("SERVER ERROR");
+            e.printStackTrace(); // 🔥 IMPORTANT
+            return ResponseEntity.status(500).body(e.getMessage());
         }
     }
 
+
+    @GetMapping("/{id}/membershipFees")
+    public List<MembershipFee> getFees(@PathVariable Integer id) {
+        return service.getFees(id);
+    }
+    @PostMapping("/{id}/membershipFees")
+    public List<MembershipFee> createFees(
+            @PathVariable Integer id,
+            @RequestBody List<MembershipFee> fees
+    ) {
+        return service.create(id, fees);
+    }
 }
