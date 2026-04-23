@@ -7,6 +7,7 @@ import mg.hei.federation_agricole.repository.MembershipFeeRepository;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -107,7 +108,9 @@ public class CollectivityService {
     public void pay(MemberPayment payment) {
         paymentRepo.save(payment);
     }
-
+    public List<FinancialAccountResponse> getFinancialAccounts(Integer collectivityId, LocalDate at) {
+        return collecRepo.findFinancialAccountsByCollectivityAndDate(collectivityId, at);
+    }
 
 
 }

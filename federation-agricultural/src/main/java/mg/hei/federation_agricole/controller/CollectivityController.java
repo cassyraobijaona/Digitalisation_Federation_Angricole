@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Connection;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -113,5 +114,20 @@ public class CollectivityController {
             @RequestBody List<MembershipFee> fees
     ) {
         return service.create(id, fees);
+    }
+    @GetMapping("/{id}/financialAccounts")
+    public ResponseEntity<?> getFinancialAccounts(
+            @PathVariable Integer id,
+            @RequestParam LocalDate at
+    ) {
+        try {
+            return ResponseEntity.ok(
+                    service.getFinancialAccounts(id, at)
+            );
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("SERVER ERROR");
+        }
     }
 }
