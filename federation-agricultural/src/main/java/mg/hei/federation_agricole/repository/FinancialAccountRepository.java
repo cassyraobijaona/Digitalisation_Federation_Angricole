@@ -25,7 +25,7 @@ public class FinancialAccountRepository {
 
         String sql = """
             INSERT INTO financial_account(owner_type, owner_id, account_type, amount)
-            VALUES (?, ?, ?, ?)
+            VALUES (?::owner_type_enum, ?, ?::account_type_enum, ?)
             RETURNING id
         """;
 
@@ -53,7 +53,7 @@ public class FinancialAccountRepository {
 
     public FinancialAccount findById(Integer id) {
 
-        String sql = "SELECT owner_type, owner_id, account_type, amount FROM financial_account WHERE id = ?";
+        String sql = "SELECT id,owner_type, owner_id, account_type, amount FROM financial_account WHERE id = ?";
 
         try (Connection con = databaseConnection.getConnection()) {
 
