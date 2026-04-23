@@ -1,5 +1,6 @@
 package mg.hei.federation_agricole.repository;
 
+import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.model.dto.MemberPayment;
 import org.springframework.stereotype.Repository;
 
@@ -10,11 +11,11 @@ import java.sql.PreparedStatement;
 @Repository
 public class MemberPaymentRepository {
 
-    private final DataSource dataSource;
+    private final DatabaseConnection databaseConnection;
     private final TransactionRepository transactionRepository;
 
-    public MemberPaymentRepository(DataSource ds, TransactionRepository tr) {
-        this.dataSource = ds;
+    public MemberPaymentRepository( DatabaseConnection databaseConnection,TransactionRepository tr) {
+        this.databaseConnection = databaseConnection;
         this.transactionRepository = tr;
     }
 
@@ -25,7 +26,7 @@ public class MemberPaymentRepository {
             VALUES (?, ?, ?, ?, ?, CURRENT_DATE)
         """;
 
-        try (Connection con = dataSource.getConnection()) {
+        try (Connection con = databaseConnection.getConnection()) {
 
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setInt(1, p.getMemberId());

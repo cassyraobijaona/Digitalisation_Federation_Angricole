@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
         try {
             PreparedStatement ps = con.prepareStatement(sql);
-            ps.setInt(1, 1); // collectivity simplifié
+            ps.setInt(1, 1);
             ps.setInt(2, p.getMemberId());
             ps.setInt(3, p.getAccountId());
             ps.setDouble(4, p.getAmount());
@@ -36,7 +37,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
     }
 
     @Override
-    public List<CollectivityTransaction> findByPeriod(int id, LocalDate from, LocalDate to) {
+    public List<CollectivityTransaction> findByPeriod(Integer id, LocalDate from, LocalDate to) {
         return new ArrayList<>();
     }
 }

@@ -1,7 +1,9 @@
 package mg.hei.federation_agricole.repository;
 
+import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.model.dto.FinancialAccount;
 import mg.hei.federation_agricole.model.dto.FinancialAccountEntity;
+import mg.hei.federation_agricole.repository.mapper.FinancialAccountFactory;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -13,10 +15,10 @@ import java.sql.SQLException;
 @Repository
 public class FinancialAccountRepository {
 
-    private final DataSource dataSource;
+    private final DatabaseConnection databaseConnection;
 
-    public FinancialAccountRepository(DataSource ds) {
-        this.dataSource = ds;
+    public FinancialAccountRepository(DatabaseConnection databaseConnection) {
+        this.databaseConnection = databaseConnection;
     }
 
     public FinancialAccount save(FinancialAccountEntity account) {
@@ -27,14 +29,14 @@ public class FinancialAccountRepository {
             RETURNING id
         """;
 
-        try (Connection con = dataSource.getConnection()) {
+        try (Connection con = databaseConnection.getConnection()) {
 
             PreparedStatement ps = con.prepareStatement(sql);
 
             ps.setString(1, account.getOwnerType().name());
             ps.setInt(2, account.getOwnerId());
             ps.setString(3, account.getAccountType().name());
-            ps.setBigDecimal(4, account.getAmount());
+            ps.setDouble(4, account.getAmount());
 
             ResultSet rs = ps.executeQuery();
 
@@ -49,11 +51,11 @@ public class FinancialAccountRepository {
         }
     }
 
-    public FinancialAccount findById(int id) {
+    public FinancialAccount findById(Integer id) {
 
-        String sql = "SELECT * FROM financial_account WHERE id = ?";
+        String sql = "SELECT owner_type, owner_id, account_type, amount FROM financial_account WHERE id = ?";
 
-        try (Connection con = dataSource.getConnection()) {
+        try (Connection con = databaseConnection.getConnection()) {
 
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setInt(1, id);

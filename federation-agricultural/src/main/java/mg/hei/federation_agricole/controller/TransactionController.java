@@ -19,7 +19,7 @@ public class TransactionController {
 
     @GetMapping("/{id}/transactions")
     public List<CollectivityTransaction> get(
-            @PathVariable int id,
+            @PathVariable Integer id,
             @RequestParam LocalDate from,
             @RequestParam LocalDate to
     ) {

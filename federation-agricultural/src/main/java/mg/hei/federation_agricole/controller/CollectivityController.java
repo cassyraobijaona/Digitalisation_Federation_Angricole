@@ -46,7 +46,7 @@ public class CollectivityController {
 
                 service.validate(c, conn);
 
-                int id = collectivityRepo.save(conn, c.getLocation(), c.isFederationApproval());
+                Integer id = collectivityRepo.save(c.getLocation(), c.isFederationApproval());
 
                 roleRepo.assign(conn, id, Integer.parseInt(c.getStructure().getPresident()), "PRESIDENT");
                 roleRepo.assign(conn, id, Integer.parseInt(c.getStructure().getVicePresident()), "VICE_PRESIDENT");
@@ -65,7 +65,7 @@ public class CollectivityController {
         return ResponseEntity.status(201).body(ids);
     }
     @PutMapping("/{id}/informations")
-    public ResponseEntity<?> update(@PathVariable int id,
+    public ResponseEntity<?> update(@PathVariable Integer id,
                                     @RequestBody CollectivityInformation input) {
 
         try (Connection conn = db.getConnection()) {
@@ -94,7 +94,14 @@ public class CollectivityController {
 
 
     @GetMapping("/{id}/membershipFees")
-    public List<MembershipFee> getFees(@PathVariable int id) {
+    public List<MembershipFee> getFees(@PathVariable Integer id) {
         return service.getFees(id);
+    }
+    @PostMapping("/{id}/membershipFees")
+    public List<MembershipFee> createFees(
+            @PathVariable Integer id,
+            @RequestBody List<MembershipFee> fees
+    ) {
+        return service.create(id, fees);
     }
 }

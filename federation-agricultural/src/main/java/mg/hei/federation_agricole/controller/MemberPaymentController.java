@@ -15,7 +15,7 @@ public class MemberPaymentController {
     }
 
     @PostMapping("/{id}/payments")
-    public void pay(@PathVariable int id, @RequestBody MemberPayment p) {
+    public void pay(@PathVariable Integer id, @RequestBody MemberPayment p) {
         p.setMemberId(id);
         service.pay(p);
     }

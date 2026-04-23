@@ -1,4 +1,5 @@
 package mg.hei.federation_agricole.repository;
+import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.model.dto.Collectivity;
 import org.springframework.stereotype.Repository;
 
@@ -9,8 +10,11 @@ import java.sql.SQLException;
 
 @Repository
 public class CollectivityRepository {
-
-    public int save(Connection conn, String location, boolean approval) throws SQLException {
+    private final DatabaseConnection databaseConnection;
+    public CollectivityRepository(DatabaseConnection databaseConnection) {
+        this.databaseConnection = databaseConnection;
+    }
+    public Integer save( String location, boolean approval) throws SQLException {
 
         String sql = """
             INSERT INTO collectivity(location, federation_approval)
@@ -18,8 +22,8 @@ public class CollectivityRepository {
             RETURNING id
         """;
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try (Connection conn = databaseConnection.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, location);
             stmt.setBoolean(2, approval);
 
@@ -28,7 +32,7 @@ public class CollectivityRepository {
             return rs.getInt(1);
         }
     }
-    public Collectivity findById(Connection conn, int id) throws SQLException {
+    public Collectivity findById(Connection conn, Integer id) throws SQLException {
 
         String sql = "SELECT * FROM collectivity WHERE id=?";
 
@@ -48,7 +52,7 @@ public class CollectivityRepository {
             return c;
         }
     }
-    public void updateInfo(Connection conn, int id, String location, boolean approval) throws SQLException {
+    public void updateInfo(Connection conn, Integer id, String location, boolean approval) throws SQLException {
 
         String sql = """
         UPDATE collectivity

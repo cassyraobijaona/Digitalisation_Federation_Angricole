@@ -21,7 +21,7 @@ public class FinancialAccountController {
     }
 
     @GetMapping("/{id}")
-    public FinancialAccount get(@PathVariable int id) {
+    public FinancialAccount get(@PathVariable Integer id) {
         return service.getAccount(id);
     }
 }

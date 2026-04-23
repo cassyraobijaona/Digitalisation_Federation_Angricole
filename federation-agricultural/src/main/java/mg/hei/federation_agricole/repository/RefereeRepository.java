@@ -8,7 +8,7 @@ import java.sql.SQLException;
 @Repository
 public class RefereeRepository {
 
-    public void save(Connection conn, int memberId, java.util.List<String> refs) throws SQLException {
+    public void save(Connection conn, Integer memberId, java.util.List<String> refs) throws SQLException {
 
         String sql = "INSERT INTO referee(member_id, referee_id) VALUES (?, ?)";
 

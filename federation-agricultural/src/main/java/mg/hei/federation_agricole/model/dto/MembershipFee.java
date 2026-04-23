@@ -7,7 +7,7 @@ import mg.hei.federation_agricole.model.enums.Frequency;
 import java.time.LocalDate;
 @Data
 public class MembershipFee {
-    private int id;
+    private Integer id;
     private LocalDate eligibleFrom;
     private Frequency frequency;
     private double amount;

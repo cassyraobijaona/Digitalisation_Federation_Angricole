@@ -5,10 +5,10 @@ import mg.hei.federation_agricole.model.enums.PaymentMode;
 
 @Data
 public class MemberPayment {
-    private int id;
-    private int memberId;
-    private int membershipFeeId;
-    private int accountId;
-    private double amount;
+    private Integer id;
+    private Integer memberId;
+    private Integer membershipFeeId;
+    private Integer accountId;
+    private Double amount;
     private PaymentMode paymentMode;
 }

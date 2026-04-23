@@ -32,7 +32,7 @@ public class CollectivityService {
         if (c.getMembers().size() < 10)
             throw new RuntimeException("Need 10 members");
 
-        int old = 0;
+        Integer old = 0;
 
         for (String id : c.getMembers()) {
 
@@ -90,9 +90,26 @@ public class CollectivityService {
         return existing;
     }
 
-    public List<MembershipFee> getFees(int collectivityId) {
+    public List<MembershipFee> getFees(Integer collectivityId) {
         return feeRepo.findByCollectivity(collectivityId);
     }
+
+    public List<MembershipFee> create(Integer collectivityId, List<MembershipFee> fees) {
+
+        for (MembershipFee f : fees) {
+
+            if (f.getAmount() <= 0) {
+                throw new RuntimeException("Amount must be > 0");
+            }
+
+            if (f.getFrequency() == null) {
+                throw new RuntimeException("Frequency required");
+            }
+        }
+
+        return feeRepo.saveAll(collectivityId, fees);
+    }
+
 
     public void pay(MemberPayment payment) {
         paymentRepo.save(payment);

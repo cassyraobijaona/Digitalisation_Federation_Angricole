@@ -5,7 +5,7 @@ import java.util.List;
 
 @Data
 public class Collectivity {
-    private int id;
+    private Integer id;
     private String location;
     private boolean federationApproval;
     private String name;   // IMMUTABLE

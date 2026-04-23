@@ -16,7 +16,7 @@ public class TransactionService {
         this.repo = repo;
     }
 
-    public List<CollectivityTransaction> getTransactions(int id, LocalDate from, LocalDate to) {
+    public List<CollectivityTransaction> getTransactions(Integer id, LocalDate from, LocalDate to) {
         return repo.findByPeriod(id, from, to);
     }
 }

@@ -23,5 +23,4 @@ public class FinancialAccountEntity implements FinancialAccount {
         return amount;
     }
 
-    // getters & setters
 }
