@@ -21,7 +21,7 @@ public class MembershipFeeRepository {
     public List<MembershipFee> findByCollectivity(Integer collectivityId) {
         List<MembershipFee> list = new ArrayList<>();
 
-        String sql = "SELECT id, eligible_from , frequency, amount, label status FROM membership_fee WHERE collectivity_id=?";
+        String sql = "SELECT id, eligible_from , frequency, amount, label,status status FROM membership_fee WHERE collectivity_id=?";
 
         try (Connection conn = databaseConnection.getConnection();) {
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -32,9 +32,10 @@ public class MembershipFeeRepository {
                 MembershipFee f = new MembershipFee();
                 f.setId(rs.getInt("id"));
                 f.setEligibleFrom(rs.getDate("eligible_from").toLocalDate());
-                f.setFrequency(Frequency.valueOf((rs.getString("frequency")).toUpperCase()));
+                f.setFrequency(Frequency.valueOf(rs.getString("frequency")));
                 f.setAmount(rs.getDouble("amount"));
                 f.setLabel(rs.getString("label"));
+                f.setStatus(ActivityStatus.valueOf(rs.getString("status")));
 
                 list.add(f);
             }
