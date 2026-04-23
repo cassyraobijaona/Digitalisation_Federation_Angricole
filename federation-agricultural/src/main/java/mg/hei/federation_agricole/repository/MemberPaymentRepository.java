@@ -18,20 +18,35 @@ public class MemberPaymentRepository {
         this.databaseConnection = databaseConnection;
         this.transactionRepository = tr;
     }
-
     public void save(MemberPayment p) {
 
         String sql = """
-            INSERT INTO member_payment(member_id, membership_fee_id, account_id, amount, payment_mode, creation_date)
-            VALUES (?, ?, ?, ?, ?, CURRENT_DATE)
-        """;
+        INSERT INTO member_payment(
+            member_id,
+            membership_fee_id,
+            account_id,
+            amount,
+            payment_mode,
+            creation_date
+        )
+        VALUES (?, ?, ?, ?, ?::payment_mode_enum, CURRENT_DATE)
+    """;
 
         try (Connection con = databaseConnection.getConnection()) {
 
+            if (p.getMembershipFeeIdentifier() == null) {
+                throw new IllegalArgumentException("membershipFeeIdentifier is required");
+            }
+
+            if (p.getAccountCreditedIdentifier() == null) {
+                throw new IllegalArgumentException("accountCreditedIdentifier is required");
+            }
+
             PreparedStatement ps = con.prepareStatement(sql);
+
             ps.setInt(1, p.getMemberId());
-            ps.setInt(2, p.getMembershipFeeId());
-            ps.setInt(3, p.getAccountId());
+            ps.setInt(2, p.getMembershipFeeIdentifier());
+            ps.setInt(3, p.getAccountCreditedIdentifier());
             ps.setDouble(4, p.getAmount());
             ps.setString(5, p.getPaymentMode().name());
 

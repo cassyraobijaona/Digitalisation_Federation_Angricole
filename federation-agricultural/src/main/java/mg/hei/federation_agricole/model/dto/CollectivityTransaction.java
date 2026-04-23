@@ -11,4 +11,6 @@ public class CollectivityTransaction {
     private LocalDate creationDate;
     private double amount;
     private PaymentMode paymentMode;
+    private Member memberDebited;              // 🔥 AJOUT
+    private FinancialAccount accountCredited;
 }

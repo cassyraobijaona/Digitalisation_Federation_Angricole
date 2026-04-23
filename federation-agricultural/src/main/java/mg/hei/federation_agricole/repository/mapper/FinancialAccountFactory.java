@@ -3,59 +3,45 @@ package mg.hei.federation_agricole.repository.mapper;
 
 import mg.hei.federation_agricole.model.dto.*;
 import mg.hei.federation_agricole.model.enums.AccountType;
+import mg.hei.federation_agricole.model.enums.Bank;
+import mg.hei.federation_agricole.model.enums.MobileBankingService;
 import mg.hei.federation_agricole.model.enums.OwnerType;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 public class FinancialAccountFactory {
 
-    public static FinancialAccount map(ResultSet rs) throws SQLException {
+        public static FinancialAccount map(ResultSet rs) throws SQLException {
 
-        Integer id = rs.getInt("id");
-        int ownerId = rs.getInt("owner_id");
-        Double amount = rs.getDouble("amount");
+            Integer accountId = rs.getInt("fa_id");
 
-        String ownerType = rs.getString("owner_type");
-        String accountType = rs.getString("account_type");
-
-        FinancialAccountEntity base = new FinancialAccountEntity();
-        base.setId(id);
-        base.setOwnerId(ownerId);
-        base.setAmount(amount);
-        base.setOwnerType(OwnerType.valueOf(ownerType));
-
-        AccountType type = AccountType.valueOf(accountType);
-
-        return switch (type) {
-
-            case CASH -> {
-                CashAccount c = new CashAccount();
-                c.setId(base.getId());
-                c.setOwnerId(base.getOwnerId());
-                c.setOwnerType(base.getOwnerType());
-                c.setAmount(base.getAmount());
-                yield c;
-            }
-
-            case MOBILE_BANKING -> {
-                MobileBankingAccount m = new MobileBankingAccount();
-                m.setId(base.getId());
-                m.setOwnerId(base.getOwnerId());
-                m.setOwnerType(base.getOwnerType());
-                m.setAmount(base.getAmount());
-                yield m;
-            }
-
-            case BANK -> {
+            // BANK
+            if (rs.getString("bank_holder") != null) {
                 BankAccount b = new BankAccount();
-                b.setId(base.getId());
-                b.setOwnerId(base.getOwnerId());
-                b.setOwnerType(base.getOwnerType());
-                b.setAmount(base.getAmount());
-                yield b;
+                b.setId(accountId);
+                b.setAmount(rs.getDouble("fa_amount"));
+                b.setHolderName(rs.getString("bank_holder"));
+                b.setBankName(Bank.valueOf(rs.getString("bank_name")));
+                b.setBankCode(rs.getInt("bank_code"));
+                b.setBankBranchCode(rs.getInt("bank_branch_code"));
+                b.setBankAccountNumber(rs.getLong("bank_account_number"));
+                b.setBankAccountKey(rs.getInt("bank_account_key"));
+                return b;
             }
 
-            default -> throw new RuntimeException("Unknown account type");
-        };
+            // MOBILE
+            if (rs.getString("mobile_holder") != null) {
+                MobileBankingAccount m = new MobileBankingAccount();
+                m.setId(accountId);
+                m.setAmount(rs.getDouble("fa_amount"));
+                return m;
+            }
+
+            // CASH (par défaut)
+            CashAccount c = new CashAccount();
+            c.setId(accountId);
+            c.setAmount(rs.getDouble("fa_amount"));
+
+            return c;
+        }
     }
-}
