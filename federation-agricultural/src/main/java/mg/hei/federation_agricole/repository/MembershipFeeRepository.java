@@ -56,7 +56,7 @@ public class MembershipFeeRepository {
                 label,
                 status
             )
-            VALUES (?, ?, ?, ?, ?, 'ACTIVE')
+            VALUES (?, ?, ?::frequency_enum, ?, ?, 'ACTIVE')
             RETURNING id
         """;
 
