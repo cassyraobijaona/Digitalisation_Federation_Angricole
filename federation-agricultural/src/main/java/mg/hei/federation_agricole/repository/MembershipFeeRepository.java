@@ -42,7 +42,9 @@ public class MembershipFeeRepository {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
+        if(list.isEmpty()) {
+            throw new RuntimeException("No membership fee found for collectivity id " + collectivityId);
+        }
         return list;
     }
 
