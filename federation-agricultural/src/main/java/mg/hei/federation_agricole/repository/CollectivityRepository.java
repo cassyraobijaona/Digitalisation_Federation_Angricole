@@ -1,12 +1,16 @@
 package mg.hei.federation_agricole.repository;
 import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.model.dto.Collectivity;
+import mg.hei.federation_agricole.model.dto.FinancialAccountResponse;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Repository
 public class CollectivityRepository {
@@ -90,4 +94,49 @@ public class CollectivityRepository {
            }
        }
    }
+    public List<FinancialAccountResponse> findFinancialAccountsByCollectivityAndDate(
+            Integer collectivityId,
+            LocalDate at
+    ) {
+
+        String sql = """
+        SELECT 
+            fa.id,
+            fa.account_type,
+            fa.amount + COALESCE(SUM(ct.amount), 0) AS balance
+        FROM financial_account fa
+        LEFT JOIN collectivity_transaction ct 
+            ON ct.account_id = fa.id
+            AND ct.creation_date <= ?
+        WHERE fa.owner_id = ?
+        GROUP BY fa.id, fa.account_type, fa.amount
+    """;
+
+        List<FinancialAccountResponse> result = new ArrayList<>();
+
+        try (Connection con = databaseConnection.getConnection()) {
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setDate(1, java.sql.Date.valueOf(at));
+            ps.setInt(2, collectivityId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+
+                FinancialAccountResponse f = new FinancialAccountResponse(
+                        rs.getInt("id"),
+                        rs.getString("account_type"),
+                        rs.getDouble("balance")
+                );
+
+                result.add(f);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return result;
+    }
 }
