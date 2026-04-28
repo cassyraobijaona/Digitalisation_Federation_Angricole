@@ -24,24 +24,24 @@ public class FinancialAccountRepository {
     public FinancialAccount save(FinancialAccountEntity account) {
 
         String sql = """
-            INSERT INTO financial_account(owner_type, owner_id, account_type, amount)
-            VALUES (?::owner_type_enum, ?, ?::account_type_enum, ?)
+            INSERT INTO financial_account(id,owner_type, collectivity_id, account_type, amount)
+            VALUES (?,?::owner_type_enum, ?, ?::account_type_enum, ?)
             RETURNING id
         """;
 
         try (Connection con = databaseConnection.getConnection()) {
 
             PreparedStatement ps = con.prepareStatement(sql);
-
-            ps.setString(1, account.getOwnerType().name());
-            ps.setInt(2, account.getOwnerId());
-            ps.setString(3, account.getAccountType().name());
-            ps.setDouble(4, account.getAmount());
+            ps.setString(1, account.getId());
+            ps.setString(2, account.getOwnerType().name());
+            ps.setString(3, account.getCollectivity_id());
+            ps.setString(4, account.getAccountType().name());
+            ps.setDouble(5, account.getAmount());
 
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                account.setId(rs.getInt("id"));
+                account.setId(rs.getString("id"));
             }
 
             return account;
@@ -51,14 +51,14 @@ public class FinancialAccountRepository {
         }
     }
 
-    public FinancialAccount findById(Integer id) {
+    public FinancialAccount findById(String id) {
 
-        String sql = "SELECT id,owner_type, owner_id, account_type, amount FROM financial_account WHERE id = ?";
+        String sql = "SELECT id,owner_type, collectivity_id, account_type, amount FROM financial_account WHERE id = ?";
 
         try (Connection con = databaseConnection.getConnection()) {
 
             PreparedStatement ps = con.prepareStatement(sql);
-            ps.setInt(1, id);
+            ps.setString(1, id);
 
             ResultSet rs = ps.executeQuery();
 

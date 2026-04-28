@@ -10,5 +10,5 @@ import java.util.List;
 public interface TransactionRepository {
     void createFromPayment(Connection con, MemberPayment p);
 
-    List<CollectivityTransaction> findByPeriod(Integer collectivityId, LocalDate from, LocalDate to);
+    List<CollectivityTransaction> findByPeriod(String collectivityId, LocalDate from, LocalDate to);
 }

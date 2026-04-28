@@ -18,7 +18,7 @@ public class FinancialAccountService {
         return repo.save(account);
     }
 
-    public FinancialAccount getAccount(Integer id) {
+    public FinancialAccount getAccount(String id) {
         return repo.findById(id);
     }
 }

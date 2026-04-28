@@ -30,9 +30,9 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
         try {
             PreparedStatement ps = con.prepareStatement(sql);
-            ps.setInt(1, p.getMemberId());
-            ps.setInt(2, p.getMemberId());
-            ps.setInt(3, p.getAccountCreditedIdentifier());
+            ps.setString(1, p.getMemberId());
+            ps.setString(2, p.getMemberId());
+            ps.setString(3, p.getAccountCreditedIdentifier());
             ps.setDouble(4, p.getAmount());
             ps.setString(5, p.getPaymentMode().name());
 
@@ -43,8 +43,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
         }
     }
 
-    @Override
-    public List<CollectivityTransaction> findByPeriod(Integer id, LocalDate from, LocalDate to) {
+
+    public List<CollectivityTransaction> findByPeriod(String id, LocalDate from, LocalDate to) {
 
         String sql = """
         SELECT
@@ -91,7 +91,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
             PreparedStatement ps = con.prepareStatement(sql);
 
-            ps.setInt(1, id);
+            ps.setString(1, id);
             ps.setDate(2, java.sql.Date.valueOf(from));
             ps.setDate(3, java.sql.Date.valueOf(to));
 
@@ -101,7 +101,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
                 CollectivityTransaction t = new CollectivityTransaction();
 
-                t.setId(rs.getInt("id"));
+                t.setId(rs.getString("id"));
                 t.setAmount(rs.getDouble("amount"));
                 t.setCreationDate(rs.getDate("creation_date").toLocalDate());
                 t.setPaymentMode(
@@ -110,7 +110,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
                 // 👤 MEMBER
                 Member m = new Member();
-                m.setId(rs.getInt("member_id"));
+                m.setId(rs.getString("member_id"));
                 m.setFirstName(rs.getString("first_name"));
                 m.setLastName(rs.getString("last_name"));
 

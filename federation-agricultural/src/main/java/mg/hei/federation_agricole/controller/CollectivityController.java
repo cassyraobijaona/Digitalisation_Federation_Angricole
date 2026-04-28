@@ -37,7 +37,7 @@ public class CollectivityController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody java.util.List<CreateCollectivity> list) {
 
-        java.util.List<Integer> ids = new java.util.ArrayList<>();
+        java.util.List<String> ids = new java.util.ArrayList<>();
 
         for (CreateCollectivity c : list) {
 
@@ -47,16 +47,16 @@ public class CollectivityController {
 
                 service.validate(c, conn);
 
-                Integer id = collectivityRepo.save(c.getLocation(), c.isFederationApproval());
+                collectivityRepo.save(c.getId(),c.getLocation(), c.isFederationApproval() );
 
-                roleRepo.assign(conn, id, Integer.parseInt(c.getStructure().getPresident()), "PRESIDENT");
-                roleRepo.assign(conn, id, Integer.parseInt(c.getStructure().getVicePresident()), "VICE_PRESIDENT");
-                roleRepo.assign(conn, id, Integer.parseInt(c.getStructure().getTreasurer()), "TREASURER");
-                roleRepo.assign(conn, id, Integer.parseInt(c.getStructure().getSecretary()), "SECRETARY");
+                roleRepo.assign(conn, c.getId(), c.getStructure().getPresident(), "PRESIDENT");
+                roleRepo.assign(conn,c.getId() , c.getStructure().getVicePresident(), "VICE_PRESIDENT");
+                roleRepo.assign(conn, c.getId(), c.getStructure().getTreasurer(), "TREASURER");
+                roleRepo.assign(conn, c.getId(), c.getStructure().getSecretary(), "SECRETARY");
 
                 conn.commit();
 
-                ids.add(id);
+                ids.add(c.getId());
 
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
@@ -66,7 +66,7 @@ public class CollectivityController {
         return ResponseEntity.status(201).body(ids);
     }
     @PutMapping("/{id}/informations")
-    public ResponseEntity<?> update(@PathVariable Integer id,
+    public ResponseEntity<?> update(@PathVariable String id,
                                     @RequestBody CollectivityInformation input) {
 
         try (Connection conn = db.getConnection()) {
@@ -105,19 +105,19 @@ public class CollectivityController {
 
 
     @GetMapping("/{id}/membershipFees")
-    public List<MembershipFee> getFees(@PathVariable Integer id) {
+    public List<MembershipFee> getFees(@PathVariable String id) {
         return service.getFees(id);
     }
     @PostMapping("/{id}/membershipFees")
     public List<MembershipFee> createFees(
-            @PathVariable Integer id,
+            @PathVariable String id,
             @RequestBody List<MembershipFee> fees
     ) {
         return service.create(id, fees);
     }
     @GetMapping("/{id}/financialAccounts")
     public ResponseEntity<?> getFinancialAccounts(
-            @PathVariable Integer id,
+            @PathVariable String id,
             @RequestParam LocalDate at
     ) {
         try {
@@ -126,6 +126,17 @@ public class CollectivityController {
             );
         } catch (RuntimeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("SERVER ERROR");
+        }
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getCollectivity(@PathVariable String id) {
+
+        try {
+            return ResponseEntity.ok(service.getCollectivityById(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(500).body("SERVER ERROR");
         }

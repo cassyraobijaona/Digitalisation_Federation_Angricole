@@ -18,38 +18,48 @@ public class CollectivityRepository {
     public CollectivityRepository(DatabaseConnection databaseConnection) {
         this.databaseConnection = databaseConnection;
     }
-    public Integer save( String location, boolean approval) throws SQLException {
-
+    public Collectivity save( String id,String location, boolean approval) throws SQLException {
+        Collectivity c = new Collectivity();
         String sql = """
-            INSERT INTO collectivity(location, federation_approval)
-            VALUES (?, ?)
-            RETURNING id
+            INSERT INTO collectivity(id,location, federation_approval)
+            VALUES (?,?, ?)
+            RETURNING id, location, federation_approval
         """;
+
 
         try (Connection conn = databaseConnection.getConnection()) {
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, location);
-            stmt.setBoolean(2, approval);
+            stmt.setString(1,id);
+            stmt.setString(2, location);
+            stmt.setBoolean(3, approval);
 
             ResultSet rs = stmt.executeQuery();
-            rs.next();
-            return rs.getInt(1);
+            if (rs.next()) {
+                c.setId(rs.getString("id"));
+                c.setLocation(rs.getString("location"));
+                c.setFederationApproval(rs.getBoolean("federation_approval"));
+
+            }
+
+        }catch (SQLException e) {
+            throw new SQLException(e.getMessage());
         }
+        return c;
     }
-    public Collectivity findById(Integer id) throws SQLException {
+    public Collectivity findById(String id) throws SQLException {
 
         String sql = "SELECT id,name,location,number, federation_approval FROM collectivity WHERE id=?";
 
         try (Connection conn = databaseConnection.getConnection()) {
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, id);
+            stmt.setString(1, id);
 
             ResultSet rs = stmt.executeQuery();
 
             if (!rs.next()) return null;
 
             Collectivity c = new Collectivity();
-            c.setId(rs.getInt("id"));
+            c.setId(rs.getString("id"));
             c.setName(rs.getString("name")); // 🔥 MISSING
             c.setNumber(rs.getObject("number", Integer.class)); // 🔥 MISSING
             c.setLocation(rs.getString("location"));
@@ -84,7 +94,7 @@ public class CollectivityRepository {
            ps.setString(1, c.getName());
            ps.setObject(2, c.getNumber());
            ps.setString(3, c.getLocation());
-           ps.setInt(4, c.getId());
+           ps.setString(4, c.getId());
 
            int rows = ps.executeUpdate();
            System.out.println("ROWS UPDATED = " + rows);
@@ -95,7 +105,7 @@ public class CollectivityRepository {
        }
    }
     public List<FinancialAccountResponse> findFinancialAccountsByCollectivityAndDate(
-            Integer collectivityId,
+            String collectivityId,
             LocalDate at
     ) {
 
@@ -118,14 +128,14 @@ public class CollectivityRepository {
 
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setDate(1, java.sql.Date.valueOf(at));
-            ps.setInt(2, collectivityId);
+            ps.setString(2, collectivityId);
 
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
 
                 FinancialAccountResponse f = new FinancialAccountResponse(
-                        rs.getInt("id"),
+                        rs.getString("id"),
                         rs.getString("account_type"),
                         rs.getDouble("balance")
                 );
@@ -139,4 +149,5 @@ public class CollectivityRepository {
 
         return result;
     }
+
 }

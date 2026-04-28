@@ -5,8 +5,8 @@ import mg.hei.federation_agricole.model.enums.Bank;
 
 @Data
 public class Referee {
-    private Integer memberId;
-    private Integer refereeId;
+    private String memberId;
+    private String refereeId;
     private String relation;
 
     public static class BankAccount extends FinancialAccountEntity {

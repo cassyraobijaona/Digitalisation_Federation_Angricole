@@ -37,7 +37,7 @@ public class CollectivityService {
 
         for (String id : c.getMembers()) {
 
-            Member m = memberRepo.findById(conn, Integer.parseInt(id));
+            Member m = memberRepo.findById(conn, id);
 
             if (m.getAdhesionDate()
                     .isBefore(java.time.LocalDate.now().minusMonths(6))) {
@@ -84,11 +84,11 @@ public class CollectivityService {
         return existing;
     }
 
-    public List<MembershipFee> getFees(Integer collectivityId) {
+    public List<MembershipFee> getFees(String collectivityId) {
         return feeRepo.findByCollectivity(collectivityId);
     }
 
-    public List<MembershipFee> create(Integer collectivityId, List<MembershipFee> fees) {
+    public List<MembershipFee> create(String collectivityId, List<MembershipFee> fees) {
 
         for (MembershipFee f : fees) {
 
@@ -108,9 +108,21 @@ public class CollectivityService {
     public void pay(MemberPayment payment) {
         paymentRepo.save(payment);
     }
-    public List<FinancialAccountResponse> getFinancialAccounts(Integer collectivityId, LocalDate at) {
+    public List<FinancialAccountResponse> getFinancialAccounts(String collectivityId, LocalDate at) {
         return collecRepo.findFinancialAccountsByCollectivityAndDate(collectivityId, at);
     }
 
+    public Collectivity getCollectivityById(String id) throws Exception {
 
+        Collectivity c = collecRepo.findById(id);
+
+        if (c == null) {
+            throw new RuntimeException("Collectivity not found");
+        }
+
+        List<Member> members = memberRepo.findByCollectivityId(id);
+        c.setMembers(members);
+
+        return c;
+    }
 }

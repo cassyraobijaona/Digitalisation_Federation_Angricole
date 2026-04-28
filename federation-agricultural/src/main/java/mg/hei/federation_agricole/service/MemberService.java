@@ -22,7 +22,7 @@ public class MemberService {
 
         for (String id : m.getReferees()) {
 
-            Member ref = memberRepo.findById(conn, Integer.parseInt(id));
+            Member ref = memberRepo.findById(conn, id);
 
             if (ref == null)
                 throw new RuntimeException("Referee not found");

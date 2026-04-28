@@ -22,6 +22,7 @@ public class MemberPaymentRepository {
 
         String sql = """
         INSERT INTO member_payment(
+            id,
             member_id,
             membership_fee_id,
             account_id,
@@ -29,7 +30,7 @@ public class MemberPaymentRepository {
             payment_mode,
             creation_date
         )
-        VALUES (?, ?, ?, ?, ?::payment_mode_enum, CURRENT_DATE)
+        VALUES (?,?, ?, ?, ?, ?::payment_mode_enum, CURRENT_DATE)
     """;
 
         try (Connection con = databaseConnection.getConnection()) {
@@ -44,11 +45,12 @@ public class MemberPaymentRepository {
 
             PreparedStatement ps = con.prepareStatement(sql);
 
-            ps.setInt(1, p.getMemberId());
-            ps.setInt(2, p.getMembershipFeeIdentifier());
-            ps.setInt(3, p.getAccountCreditedIdentifier());
-            ps.setDouble(4, p.getAmount());
-            ps.setString(5, p.getPaymentMode().name());
+            ps.setString(1, p.getId());
+            ps.setString(2, p.getMemberId());
+            ps.setString(3, p.getMembershipFeeIdentifier());
+            ps.setString(4, p.getAccountCreditedIdentifier());
+            ps.setDouble(5, p.getAmount());
+            ps.setString(6, p.getPaymentMode().name());
 
             ps.executeUpdate();
 

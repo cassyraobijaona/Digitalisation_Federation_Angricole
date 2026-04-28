@@ -7,7 +7,7 @@ import java.time.LocalDate;
 
 @Data
 public class CollectivityTransaction {
-    private Integer id;
+    private String id;
     private LocalDate creationDate;
     private double amount;
     private PaymentMode paymentMode;

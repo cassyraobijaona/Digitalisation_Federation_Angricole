@@ -7,14 +7,14 @@ import mg.hei.federation_agricole.model.enums.OwnerType;
 @Data
 public class FinancialAccountEntity implements FinancialAccount {
 
-    private Integer id;
+    private String id;
     private OwnerType ownerType;
-    private Integer ownerId;
+    private String collectivity_id;
     private AccountType accountType;
     private Double amount;
 
     @Override
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 

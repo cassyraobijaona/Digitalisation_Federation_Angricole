@@ -13,7 +13,7 @@ public class FinancialAccountFactory {
 
         public static FinancialAccount map(ResultSet rs) throws SQLException {
 
-            Integer accountId = rs.getInt("fa_id");
+            String accountId = rs.getString("fa_id");
 
             // BANK
             if (rs.getString("bank_holder") != null) {

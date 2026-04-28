@@ -18,19 +18,19 @@ public class MembershipFeeRepository {
         this.databaseConnection =databaseConnection;
     }
 
-    public List<MembershipFee> findByCollectivity(Integer collectivityId) {
+    public List<MembershipFee> findByCollectivity(String collectivityId) {
         List<MembershipFee> list = new ArrayList<>();
 
         String sql = "SELECT id, eligible_from , frequency, amount, label,status status FROM membership_fee WHERE collectivity_id=?";
 
         try (Connection conn = databaseConnection.getConnection();) {
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, collectivityId);
+            ps.setString(1, collectivityId);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 MembershipFee f = new MembershipFee();
-                f.setId(rs.getInt("id"));
+                f.setId(rs.getString("id"));
                 f.setEligibleFrom(rs.getDate("eligible_from").toLocalDate());
                 f.setFrequency(Frequency.valueOf(rs.getString("frequency")));
                 f.setAmount(rs.getDouble("amount"));
@@ -49,9 +49,10 @@ public class MembershipFeeRepository {
     }
 
 
-    public List<MembershipFee> saveAll(Integer collectivityId, List<MembershipFee> fees) {
+    public List<MembershipFee> saveAll(String collectivityId, List<MembershipFee> fees) {
         String sql = """
             INSERT INTO membership_fee(
+                 id,                      
                 collectivity_id,
                 eligible_from,
                 frequency,
@@ -59,7 +60,7 @@ public class MembershipFeeRepository {
                 label,
                 status
             )
-            VALUES (?, ?, ?::frequency_enum, ?, ?, 'ACTIVE')
+            VALUES (?,?, ?, ?::frequency_enum, ?, ?, 'ACTIVE'::activity_status_enum)
             RETURNING id
         """;
 
@@ -70,16 +71,17 @@ public class MembershipFeeRepository {
             for (MembershipFee f : fees) {
 
                 PreparedStatement ps = con.prepareStatement(sql);
-                ps.setInt(1, collectivityId);
-                ps.setDate(2, Date.valueOf(f.getEligibleFrom()));
-                ps.setString(3, f.getFrequency().name());
-                ps.setDouble(4, f.getAmount());
-                ps.setString(5, f.getLabel());
+                ps.setString(1, f.getId());
+                ps.setString(2, collectivityId);
+                ps.setDate(3, Date.valueOf(f.getEligibleFrom()));
+                ps.setString(4, f.getFrequency().name());
+                ps.setDouble(5, f.getAmount());
+                ps.setString(6, f.getLabel());
 
                 ResultSet rs = ps.executeQuery();
 
                 if (rs.next()) {
-                    f.setId(rs.getInt("id"));
+                    f.setId(rs.getString("id"));
                     f.setStatus(ActivityStatus.ACTIVE);
                 }
 

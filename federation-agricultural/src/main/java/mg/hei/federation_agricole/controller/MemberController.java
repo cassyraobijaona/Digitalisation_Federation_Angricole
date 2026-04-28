@@ -1,6 +1,7 @@
 package mg.hei.federation_agricole.controller;
 import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.model.dto.CreateMember;
+import mg.hei.federation_agricole.model.dto.Member;
 import mg.hei.federation_agricole.repository.MemberRepository;
 import mg.hei.federation_agricole.repository.RefereeRepository;
 import mg.hei.federation_agricole.service.MemberService;
@@ -34,7 +35,7 @@ public class MemberController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody java.util.List<CreateMember> members) {
 
-        java.util.List<Integer> ids = new java.util.ArrayList<>();
+        java.util.List<String> ids = new java.util.ArrayList<>();
 
         for (CreateMember m : members) {
 
@@ -44,9 +45,9 @@ public class MemberController {
 
                 service.validate(m, conn);
 
-                Integer id = memberRepo.save( m);
-
+                String id = memberRepo.save( m);
                 refereeRepo.save(conn, id, m.getReferees());
+
 
                 conn.commit();
 
