@@ -98,7 +98,7 @@ public class CollectivityController {
             return ResponseEntity.ok(updated);
 
         } catch (Exception e) {
-            e.printStackTrace(); // 🔥 IMPORTANT
+             // 🔥 IMPORTANT
             return ResponseEntity.status(500).body(e.getMessage());
         }
     }

@@ -60,7 +60,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
                                              m.last_name,
                                          
                                              fa.id as fa_id,
-                                             fa.owner_id,
+                                             fa.collectivity_id,
                                              fa.owner_type,
                                              fa.amount as fa_amount,
                                          
