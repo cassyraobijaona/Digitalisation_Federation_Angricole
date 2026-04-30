@@ -37,7 +37,7 @@ public class CollectivityController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody java.util.List<CreateCollectivity> list) {
 
-        java.util.List<String> ids = new java.util.ArrayList<>();
+        List<String> ids = new java.util.ArrayList<>();
 
         for (CreateCollectivity c : list) {
 
@@ -47,7 +47,7 @@ public class CollectivityController {
 
                 service.validate(c, conn);
 
-                collectivityRepo.save(c.getId(),c.getLocation(), c.isFederationApproval() );
+                collectivityRepo.save(c.getId(),c.getLocation(),c.getSpecialization(), c.isFederationApproval() );
 
                 roleRepo.assign(conn, c.getId(), c.getStructure().getPresident(), "PRESIDENT");
                 roleRepo.assign(conn,c.getId() , c.getStructure().getVicePresident(), "VICE_PRESIDENT");

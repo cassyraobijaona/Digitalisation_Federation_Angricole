@@ -7,6 +7,7 @@ import java.util.List;
 public class CreateCollectivity {
     private String id;
     private String location;
+    private String specialization;
     private List<String> members;
     private Boolean federationApproval;
     private CreateCollectivityStructure structure;

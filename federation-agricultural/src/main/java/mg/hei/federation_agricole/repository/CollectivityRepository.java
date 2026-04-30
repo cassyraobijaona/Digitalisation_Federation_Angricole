@@ -1,6 +1,7 @@
 package mg.hei.federation_agricole.repository;
 import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.model.dto.Collectivity;
+import mg.hei.federation_agricole.model.dto.CreateCollectivity;
 import mg.hei.federation_agricole.model.dto.FinancialAccountResponse;
 import org.springframework.stereotype.Repository;
 
@@ -18,12 +19,12 @@ public class CollectivityRepository {
     public CollectivityRepository(DatabaseConnection databaseConnection) {
         this.databaseConnection = databaseConnection;
     }
-    public Collectivity save( String id,String location, boolean approval) throws SQLException {
-        Collectivity c = new Collectivity();
+    public CreateCollectivity save(String id, String location, String specialization, boolean approval) throws SQLException {
+        CreateCollectivity c = new CreateCollectivity();
         String sql = """
-            INSERT INTO collectivity(id,location, federation_approval)
-            VALUES (?,?, ?)
-            RETURNING id, location, federation_approval
+            INSERT INTO collectivity(id,location,specialization, federation_approval)
+            VALUES (?,?, ?,?)
+            RETURNING id, location,specialization, federation_approval
         """;
 
 
@@ -31,12 +32,14 @@ public class CollectivityRepository {
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1,id);
             stmt.setString(2, location);
-            stmt.setBoolean(3, approval);
+            stmt.setString(3, specialization);
+            stmt.setBoolean(4, approval);
 
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 c.setId(rs.getString("id"));
                 c.setLocation(rs.getString("location"));
+                c.setSpecialization(rs.getString("specialization"));
                 c.setFederationApproval(rs.getBoolean("federation_approval"));
 
             }

@@ -7,6 +7,7 @@ import java.util.List;
 public class Collectivity {
     private String id;
     private String location;
+    private String specialization;
     private boolean federationApproval;
     private String name;   // IMMUTABLE
     private Integer number;
