@@ -41,7 +41,9 @@ public class MemberRepository {
             stmt.setString(10, m.getOccupation().name());
 
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return rs.getString("id");
+            if (rs.next())
+
+                return rs.getString("id");
         }catch (Exception e) {
             throw new SQLException(e);
         }

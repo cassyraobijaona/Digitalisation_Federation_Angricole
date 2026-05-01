@@ -24,7 +24,7 @@ public class CreateMember extends MemberInformation {
 
     private String collectivityIdentifier;
     private List<String> referees;
-
+    private String relation;
     private boolean registrationFeePaid;
     private boolean membershipDuesPaid;
 }

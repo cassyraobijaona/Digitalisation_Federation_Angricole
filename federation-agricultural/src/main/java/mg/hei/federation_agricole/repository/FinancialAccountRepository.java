@@ -53,8 +53,27 @@ public class FinancialAccountRepository {
 
     public FinancialAccount findById(String id) {
 
-        String sql = "SELECT id,owner_type, collectivity_id, account_type, amount FROM financial_account WHERE id = ?";
-
+        String sql = """
+    SELECT 
+        fa.id               AS fa_id,
+        fa.owner_type,
+        fa.collectivity_id,
+        fa.account_type,
+        fa.amount           AS fa_amount,
+        b.holder_name       AS bank_holder,
+        b.bank_name,
+        b.bank_code,
+        b.bank_branch_code,
+        b.bank_account_number,
+        b.bank_account_key,
+        m.holder_name       AS mobile_holder,
+        m.mobile_service,
+        m.mobile_number
+    FROM financial_account fa
+    LEFT JOIN bank_account b   ON b.id = fa.id
+    LEFT JOIN mobile_account m ON m.id = fa.id
+    WHERE fa.collectivity_id = ?
+""";
         try (Connection con = databaseConnection.getConnection()) {
 
             PreparedStatement ps = con.prepareStatement(sql);

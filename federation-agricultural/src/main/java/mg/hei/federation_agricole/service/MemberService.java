@@ -18,6 +18,7 @@ public class MemberService {
     public void validate(CreateMember m, Connection conn) throws Exception {
 
         if (m.getReferees() == null || m.getReferees().size() < 2)
+
             throw new RuntimeException("At least 2 referees required");
 
         for (String id : m.getReferees()) {
