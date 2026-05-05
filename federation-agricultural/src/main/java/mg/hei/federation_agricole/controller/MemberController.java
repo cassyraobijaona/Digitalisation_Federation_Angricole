@@ -1,5 +1,6 @@
 package mg.hei.federation_agricole.controller;
 import mg.hei.federation_agricole.config.DatabaseConnection;
+import mg.hei.federation_agricole.exception.BadRequestException;
 import mg.hei.federation_agricole.model.dto.CreateMember;
 import mg.hei.federation_agricole.model.dto.Member;
 import mg.hei.federation_agricole.repository.MemberRepository;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/members")
@@ -33,29 +36,28 @@ public class MemberController {
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody java.util.List<CreateMember> members) {
+    public ResponseEntity<?> create(@RequestBody List<CreateMember> members) {
 
-        java.util.List<String> ids = new java.util.ArrayList<>();
+        if (members == null || members.isEmpty())
+            throw new BadRequestException("Members list cannot be empty");
+
+        List<String> ids = new ArrayList<>();
 
         for (CreateMember m : members) {
-
             try (Connection conn = db.getConnection()) {
-
                 conn.setAutoCommit(false);
-
                 service.validate(m, conn);
-
-                String id = memberRepo.save( m);
-                refereeRepo.save(conn, m.getId(), m.getReferees(),m.getRelation());
+                String id = memberRepo.save(m);
+                refereeRepo.save(conn, m.getId(), m.getReferees(), m.getRelation());
                 conn.commit();
-
                 ids.add(id);
-
+            } catch (BadRequestException e) {
+                throw e; // → 400
             } catch (Exception e) {
-                throw new RuntimeException(e.getMessage());
+                throw new RuntimeException(e.getMessage()); // → 500
             }
         }
 
-        return ResponseEntity.status(201).body(ids);
+        return ResponseEntity.status(201).body(ids); // 201
     }
 }

@@ -57,7 +57,7 @@ CREATE TABLE member (
                                address       TEXT,
                                profession    VARCHAR(100),
                                phone_number  VARCHAR(20),
-                               email         VARCHAR(150)         UNIQUE,
+                               email         VARCHAR(150)         UNIQUE,z
                                occupation    occupation_enum      NOT NULL,
                                adhesion_date DATE                 DEFAULT CURRENT_DATE,
 

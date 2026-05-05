@@ -1,4 +1,5 @@
 package  mg.hei.federation_agricole.service;
+import mg.hei.federation_agricole.exception.BadRequestException;
 import mg.hei.federation_agricole.model.dto.*;
 import mg.hei.federation_agricole.repository.CollectivityRepository;
 import mg.hei.federation_agricole.repository.MemberPaymentRepository;
@@ -28,25 +29,31 @@ public class CollectivityService {
     public void validate(CreateCollectivity c, Connection conn) throws Exception {
 
         if (!c.isFederationApproval())
-            throw new RuntimeException("No federation approval");
+            throw new BadRequestException("No federation approval");
 
-        if (c.getMembers().size() < 10)
-            throw new RuntimeException("Need 10 members");
+        if (c.getMembers() == null || c.getMembers().size() < 10)
+            throw new BadRequestException("Need at least 10 members");
 
-        Integer old = 0;
+        if (c.getStructure() == null)
+            throw new BadRequestException("Structure is required");
 
+        if (c.getStructure().getPresident() == null ||
+                c.getStructure().getVicePresident() == null ||
+                c.getStructure().getTreasurer() == null ||
+                c.getStructure().getSecretary() == null)
+            throw new BadRequestException("All structure roles are required");
+
+        int old = 0;
         for (String id : c.getMembers()) {
-
             Member m = memberRepo.findById(conn, id);
-
-            if (m.getAdhesionDate()
-                    .isBefore(java.time.LocalDate.now().minusMonths(6))) {
+            if (m == null)
+                throw new BadRequestException("Member not found: " + id);
+            if (m.getAdhesionDate().isBefore(LocalDate.now().minusMonths(6)))
                 old++;
-            }
         }
 
         if (old < 5)
-            throw new RuntimeException("Need 5 senior members");
+            throw new BadRequestException("Need at least 5 senior members (6+ months)");
     }
     public void validateUpdate(Collectivity existing, CollectivityInformation input) {
 

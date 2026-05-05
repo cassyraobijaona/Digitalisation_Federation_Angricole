@@ -267,3 +267,51 @@ ALTER TABLE public.membership_fee
 ALTER TABLE public.member_payment
     ADD CONSTRAINT member_payment_membership_fee_id_fkey
         FOREIGN KEY (membership_fee_id) REFERENCES public.membership_fee(id);
+
+
+
+
+
+
+DONNEE DE TEST
+       [
+  {
+    "id": "col-4",
+    "location": "Antananarivo",
+    "specialization": "Fiompiana",
+    "federationApproval": true,
+    "members": [
+      "C1-M1",
+      "C1-M2",
+      "C1-M3",
+      "C1-M4",
+      "C1-M5",
+      "C1-M6",
+      "C3-M1",
+      "C3-M2",
+      "C3-M3",
+      "C3-M4"
+    ],
+    "structure": {
+      "president": "C3-M1",
+      "vicePresident": "C3-M2",
+      "treasurer": "C3-M3",
+      "secretary": "C3-M4"
+    }
+  }
+]
+
+{
+    "name": "Mpandray Anjara",
+    "number":5
+}
+[
+    {
+        "id": "cot-5",
+        "eligibleFrom": "2026-01-01",
+        "frequency": "ANNUALLY",
+        "amount": 100000.0,
+        "label": "Cotisation annuelle",
+        "status": "ACTIVE"
+    }
+]
