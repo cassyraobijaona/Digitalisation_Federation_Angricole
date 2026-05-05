@@ -20,21 +20,23 @@ public class TransactionRepositoryImpl implements TransactionRepository {
     public TransactionRepositoryImpl(DatabaseConnection databaseConnection) {
         this.databaseConnection = databaseConnection;
     }
+
     @Override
     public void createFromPayment(Connection con, MemberPayment p) {
 
         String sql = """
-            INSERT INTO collectivity_transaction(collectivity_id, member_id, account_id, amount, payment_mode, creation_date)
-            VALUES (?, ?, ?, ?, ?::payment_mode_enum, CURRENT_DATE)
-        """;
+        INSERT INTO collectivity_transaction(id, collectivity_id, member_id, account_id, amount, payment_mode, creation_date)
+        VALUES (?, ?, ?, ?, ?, ?::payment_mode_enum, CURRENT_DATE)
+    """;
 
         try {
             PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, p.getMemberId());
-            ps.setString(2, p.getMemberId());
-            ps.setString(3, p.getAccountCreditedIdentifier());
-            ps.setDouble(4, p.getAmount());
-            ps.setString(5, p.getPaymentMode().name());
+            ps.setString(1, java.util.UUID.randomUUID().toString());
+            ps.setString(2, p.getCollectivityId());
+            ps.setString(3, p.getMemberId());
+            ps.setString(4, p.getAccountCreditedIdentifier());
+            ps.setDouble(5, p.getAmount());
+            ps.setString(6, p.getPaymentMode().name());
 
             ps.executeUpdate();
 

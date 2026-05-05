@@ -7,6 +7,7 @@ import mg.hei.federation_agricole.model.enums.PaymentMode;
 public class MemberPayment {
     private String id;
     private String memberId;
+    private String collectivityId;
     private String membershipFeeIdentifier;
     private String accountCreditedIdentifier;
     private Double amount;

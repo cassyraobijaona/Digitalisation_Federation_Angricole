@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 @Repository
 public class MemberPaymentRepository {
@@ -17,6 +18,15 @@ public class MemberPaymentRepository {
     public MemberPaymentRepository( DatabaseConnection databaseConnection,TransactionRepository tr) {
         this.databaseConnection = databaseConnection;
         this.transactionRepository = tr;
+    }
+    // Méthode à ajouter dans MemberPaymentRepository
+    private String findCollectivityIdByMember(Connection con, String memberId) throws Exception {
+        String sql = "SELECT collectivity_id FROM collectivity_member WHERE member_id = ? LIMIT 1";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, memberId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) return rs.getString("collectivity_id");
+        throw new RuntimeException("Member not linked to any collectivity: " + memberId);
     }
     public void save(MemberPayment p) {
 
@@ -53,7 +63,10 @@ public class MemberPaymentRepository {
             ps.setString(6, p.getPaymentMode().name());
 
             ps.executeUpdate();
-
+            // Avant d'appeler createFromPayment
+            String collectivityId = findCollectivityIdByMember(con, p.getMemberId());
+            p.setCollectivityId(collectivityId);
+            transactionRepository.createFromPayment(con, p);
             transactionRepository.createFromPayment(con, p);
 
         } catch (Exception e) {
