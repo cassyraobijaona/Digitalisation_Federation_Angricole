@@ -9,6 +9,11 @@ public class Collectivity {
     private String number;
     private String name;
     private String location;
-    private CollectivityStructure structure;
+    private String specialization;
+    private boolean federationApproval;
+    private String name;   // IMMUTABLE
+    private Integer number;
     private List<Member> members;
+
+    private CollectivityStructure structure;
 }

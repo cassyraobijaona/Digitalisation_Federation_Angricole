@@ -5,6 +5,8 @@ info:
     # Versioning
     This API uses semantic versioning (MAJOR.MINOR.PATCH). Available versions are : 
     - v0.0.1 (2026-04-21) : POST /collectivities for collectivities creation and POST /members for members creation.
+    - v0.0.2 (2026-04-22) : PUT /collectivities/{id}/informations for collectivity information update.
+    - v0.0.3 (2026-04-23) : New features about membership fees, collectivities transactions and its financial accounts, and members payments.
   version: 0.0.1
 servers:
   - url: 'https://localhost:8080'
@@ -35,42 +37,115 @@ paths:
           description: Collectivity without federation approval or structure missing.
         404:
           description: Member not found.
-
-  '/collectivities/{collectivityId}/identity':
-    patch:
-      summary: Assign a number and a unique name to a collectivity
-      description: |
-        This endpoint allows the federation to assign a unique number
-        and a unique name to a collectivity.
-        Once assigned, the number and name cannot be changed.
+  '/collectivities/{id}/informations':
+    put:
+      summary: Attribute collectivity informations to specific collectivity
       parameters:
-        - name: collectivityId
-          in: path
-          required: true
+        - in: path
+          name: id
           schema:
             type: string
-          description: The collectivity identifier
+          required: true
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AssignIdentityRequest'
+              $ref: '#/components/schemas/CollectivityInformation'
       responses:
         200:
-          description: Collectivity updated with number and name
+          description: Collectivity with updated information
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Collectivity'
         400:
-          description: |
-            Bad request in the following cases :
-            - Number or name already assigned and cannot be changed.
-            - Name already exists in another collectivity.
+          description: Either given number or name is already used by other collectivity.
         404:
           description: Collectivity not found.
-
+  '/collectivities/{id}/membershipFees':
+    get:
+      summary: Retrieve collectivity membership fees
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: List of membership fees for the specific collectivity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MembershipFee'
+        404:
+          description: Collectivity not found.
+    post:
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      summary: Create new membership fees for a specific collectivity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateMembershipFee'
+      responses:
+        200:
+          description: Created membership fees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MembershipFee'
+        400:
+          description: Either unrecognized frequency or amount under 0.
+        404:
+          description: Collectivity not found.
+  '/collectivities/{id}/transactions':
+    get:
+      summary: Retrieve specific collectivity transactions for a given period
+      description: |
+        Query parameters `from` and `to` are mandatory to filters collectivity transactions.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+          required: true
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        200:
+          description: List of collectivity transactions between provided dates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectivityTransaction'
+        400:
+          description: Provided query parameters occur some exceptions.
+        404:
+          description: Collectivity not found.
   '/members':
     post:
       summary: Create list of members
@@ -97,6 +172,95 @@ paths:
             - Membership dues not paid or registration fee not paid.
         404:
           description: Either collectivity or member not found.
+  '/members/{id}/payments':
+    post:
+      summary: Create some payments for given member
+      description: |
+        Each time a member create a payment, a transaction is store automatically inside collectivities transactions.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateMemberPayment'
+      responses:
+        201:
+          description: List of created members payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemberPayment'
+  '/collectivities/{id}/financialAccounts':
+    get:
+      summary: Retrieve collectivity financial accounts with balance at a given date
+      description: |
+        Returns all financial accounts (cash, bank, mobile money) of a collectivity
+        with their balance computed at a specific date.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+
+        - in: query
+          name: at
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date used to compute account balance
+
+      responses:
+        200:
+          description: List of financial accounts with computed balance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinancialAccount'
+
+        400:
+            $ref: '#/components/responses/BadRequest'
+
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
+  '/collectivities/{id}':
+    get:
+      summary: Get collectivity by id with members
+      description: |
+        Returns collectivity details including list of members and structure.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+
+      responses:
+        200:
+          description: Collectivity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collectivity'
+
+        404:
+          $ref: '#/components/responses/NotFound'
+        500:
+          $ref: '#/components/responses/InternalError'
 components:
   schemas:
     CreateCollectivity:
@@ -135,8 +299,17 @@ components:
           $ref: '#/components/schemas/Member'
         secretary:
           $ref: '#/components/schemas/Member'
+    CollectivityInformation:
+      type: object
+      properties:
+        name:
+          type: string
+        number:
+          type: int
     Collectivity:
       type: object
+      allOf:
+        - $ref: '#/components/schemas/CollectivityInformation'
       properties:
         id:
           type: string
@@ -148,20 +321,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Member'
-    AssignIdentityRequest:
-      type: object
-      required:
-        - number
-        - name
-      properties:
-        number:
-          type: string
-          description: Unique number assigned by the federation
-          example: "COLL-2026-001"
-        name:
-          type: string
-          description: Unique name assigned by the federation
-          example: "Collectivité Analamanga Nord"
+          description: List of members belonging to the collectivity
     MemberIdentifier:
       type: string
     CreateMember:
@@ -212,6 +372,131 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Member'
+    CreateMembershipFee:
+      type: object
+      properties:
+        eligibleFrom:
+          type: string
+          format: date
+        frequency:
+          $ref: '#/components/schemas/Frequency'
+        amount:
+          type: number
+        label:
+          type: string
+    MembershipFee:
+      allOf:
+        - $ref: '#/components/schemas/CreateMembershipFee'
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          $ref: '#/components/schemas/ActivityStatus'
+    CreateMemberPayment:
+      type: object
+      properties:
+        amount:
+          type: int
+        membershipFeeIdentifier:
+          type: string
+        accountCreditedIdentifier:
+          type: string
+        paymentMode:
+          $ref: '#/components/schemas/PaymentMode'
+    MemberPayment:
+      properties:
+        id:
+          type: string
+        amount:
+          type: int
+        paymentMode:
+          $ref: '#/components/schemas/PaymentMode'
+        accountCredited:
+          $ref: '#/components/schemas/FinancialAccount'
+        creationDate:
+          type: string
+          format: date
+
+    FinancialAccount:
+      oneOf:
+        - $ref: '#/components/schemas/CashAccount'
+        - $ref: '#/components/schemas/MobileBankingAccount'
+        - $ref: '#/components/schemas/BankAccount'
+    CashAccount:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: int
+    MobileBankingAccount:
+      type: object
+      properties:
+        id:
+          type: string
+        holderName:
+          type: string
+        mobileBankingService:
+          $ref: '#/components/schemas/MobileBankingService'
+        mobileNumber:
+          type: int
+        amount:
+          type: number
+    BankAccount:
+      type: object
+      properties:
+        id:
+          type: string
+        holderName:
+          type:
+            string
+        bankName:
+          $ref: '#/components/schemas/Bank'
+        bankCode:
+          type: int
+        bankBranchCode:
+          type: int
+        bankAccountNumber:
+          type: int
+        bankAccountKey:
+          type: int
+        amount:
+          type: number
+    MobileBankingService:
+      type: string
+      enum:
+        - AIRTEL_MONEY
+        - MVOLA
+        - ORANGE_MONEY
+    CollectivityTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+        creationDate:
+          type: string
+          format: date
+        amount:
+          type: number
+        paymentMode:
+          $ref: '#/components/schemas/PaymentMode'
+        accountCredited:
+          $ref: '#/components/schemas/FinancialAccount'
+        memberDebited:
+          $ref: '#/components/schemas/Member'
+    Bank:
+      type: string
+      enum:
+        - BRED
+        - MCB
+        - BMOI
+        - BOA
+        - BGFI
+        - AFG
+        - ACCES_BAQUE
+        - BAOBAB
+        - SIPEM
     Gender:
       type: string
       enum:
@@ -226,3 +511,29 @@ components:
         - TREASURER
         - VICE_PRESIDENT
         - PRESIDENT
+    Frequency:
+      type: string
+      enum:
+        - WEEKLY
+        - MONTHLY
+        - ANNUALLY
+        - PUNCTUALLY
+    ActivityStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+    PaymentMode:
+      type: string
+      enum:
+        - CASH
+        - MOBILE_BANKING
+        - BANK_TRANSFER
+
+  responses:
+    BadRequest:
+      description: Bad request (validation error)
+    NotFound:
+      description: Resource not found
+    InternalError:
+      description: Unexpected server error

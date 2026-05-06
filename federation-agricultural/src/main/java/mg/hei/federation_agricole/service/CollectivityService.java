@@ -1,138 +1,136 @@
-package mg.hei.federation_agricole.service;
-
+package  mg.hei.federation_agricole.service;
+import mg.hei.federation_agricole.exception.BadRequestException;
 import mg.hei.federation_agricole.model.dto.*;
 import mg.hei.federation_agricole.repository.CollectivityRepository;
+import mg.hei.federation_agricole.repository.MemberPaymentRepository;
 import mg.hei.federation_agricole.repository.MemberRepository;
-import org.springframework.http.HttpStatus;
+import mg.hei.federation_agricole.repository.MembershipFeeRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
+import java.sql.Connection;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
 public class CollectivityService {
 
-    private final CollectivityRepository collectivityRepository;
-    private final MemberRepository memberRepository;
-
-    public CollectivityService(
-            CollectivityRepository collectivityRepository,
-            MemberRepository memberRepository) {
-        this.collectivityRepository = collectivityRepository;
-        this.memberRepository = memberRepository;
+    private final MemberRepository memberRepo;
+    private final CollectivityRepository collecRepo;
+    private final MembershipFeeRepository feeRepo;
+    private final MemberPaymentRepository paymentRepo;
+    public CollectivityService(MembershipFeeRepository feeRepo, MemberPaymentRepository paymentRepo,MemberRepository memberRepo, CollectivityRepository collecRepo) {
+        this.memberRepo = memberRepo;
+        this.collecRepo = collecRepo;
+        this.feeRepo = feeRepo;
+        this.paymentRepo = paymentRepo;
     }
 
-    public List<Collectivity> createCollectivities(
-            List<CreateCollectivity> requests) {
 
-        List<Collectivity> result = new ArrayList<>();
+    public void validate(CreateCollectivity c, Connection conn) throws Exception {
 
-        for (CreateCollectivity req : requests) {
+        if (!c.isFederationApproval())
+            throw new BadRequestException("No federation approval");
 
-            // Federation approval check
-            if (req.getFederationApproval() == null
-                    || !req.getFederationApproval()) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Federation approval required");
-            }
+        if (c.getMembers() == null || c.getMembers().size() < 10)
+            throw new BadRequestException("Need at least 10 members");
 
-            // Structure check
-            if (req.getStructure() == null) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Structure is required");
-            }
+        if (c.getStructure() == null)
+            throw new BadRequestException("Structure is required");
 
-            // Minimum 10 members
-            if (req.getMembers() == null
-                    || req.getMembers().size() < 10) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "At least 10 members required");
-            }
+        if (c.getStructure().getPresident() == null ||
+                c.getStructure().getVicePresident() == null ||
+                c.getStructure().getTreasurer() == null ||
+                c.getStructure().getSecretary() == null)
+            throw new BadRequestException("All structure roles are required");
 
-            // Resolve members
-            List<Member> members = new ArrayList<>();
-            for (String memberId : req.getMembers()) {
-                try {
-                    Member m = memberRepository.findById(memberId);
-                    if (m == null) {
-                        throw new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Member not found: " + memberId);
-                    }
-                    members.add(m);
-                } catch (SQLException e) {
-                    throw new ResponseStatusException(
-                            HttpStatus.INTERNAL_SERVER_ERROR,
-                            e.getMessage());
-                }
-            }
+        int old = 0;
+        for (String id : c.getMembers()) {
+            Member m = memberRepo.findById(conn, id);
+            if (m == null)
+                throw new BadRequestException("Member not found: " + id);
+            if (m.getAdhesionDate().isBefore(LocalDate.now().minusMonths(6)))
+                old++;
+        }
 
-            // Resolve structure
-            CollectivityStructure structure =
-                    resolveStructure(req.getStructure());
+        if (old < 5)
+            throw new BadRequestException("Need at least 5 senior members (6+ months)");
+    }
+    public void validateUpdate(Collectivity existing, CollectivityInformation input) {
 
-            // Save collectivity
-            try {
-                int collectivityId =
-                        collectivityRepository.save(req.getLocation());
+        System.out.println("EXISTING NAME = " + existing.getName());
+        System.out.println("INPUT NAME = " + input.getName());
+        System.out.println("EXISTING NUMBER = " + existing.getNumber());
+        System.out.println("INPUT NUMBER = " + input.getNumber());
 
-                Collectivity collectivity = new Collectivity();
-                collectivity.setId(String.valueOf(collectivityId));
-                collectivity.setLocation(req.getLocation());
-                collectivity.setStructure(structure);
-                collectivity.setMembers(members);
-                result.add(collectivity);
+        // 🔥 NUMBER
+        if (input.getNumber() != null) {
 
-            } catch (SQLException e) {
-                throw new ResponseStatusException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        e.getMessage());
+            if (existing.getNumber() != null &&
+                    !input.getNumber().equals(existing.getNumber())) {
+                throw new RuntimeException("NUMBER CANNOT BE MODIFIED");
             }
         }
-        return result;
+
+        // 🔥 NAME
+        if (input.getName() != null) {
+
+            if (existing.getName() != null &&
+                    !input.getName().equals(existing.getName())) {
+                throw new RuntimeException("NAME CANNOT BE MODIFIED");
+            }
+        }
+    }
+    public Collectivity update(Collectivity existing, CollectivityInformation input, Connection conn) throws Exception {
+
+        validateUpdate(existing, input);
+
+        collecRepo.updateCollectivity( existing);
+
+        conn.commit(); // 🔥 OBLIGATOIRE si autoCommit=false
+
+        return existing;
     }
 
-    private CollectivityStructure resolveStructure(
-            CreateCollectivityStructure req) {
-        CollectivityStructure structure = new CollectivityStructure();
-        try {
-            if (req.getPresident() != null) {
-                Member m = memberRepository.findById(req.getPresident());
-                if (m == null) throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "President not found");
-                structure.setPresident(m);
+    public List<MembershipFee> getFees(String collectivityId) {
+        return feeRepo.findByCollectivity(collectivityId);
+    }
+
+    public List<MembershipFee> create(String collectivityId, List<MembershipFee> fees) {
+
+        for (MembershipFee f : fees) {
+
+            if (f.getAmount() <= 0) {
+                throw new RuntimeException("Amount must be > 0");
             }
-            if (req.getVicePresident() != null) {
-                Member m = memberRepository.findById(req.getVicePresident());
-                if (m == null) throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Vice president not found");
-                structure.setVicePresident(m);
+
+            if (f.getFrequency() == null) {
+                throw new RuntimeException("Frequency required");
             }
-            if (req.getTreasurer() != null) {
-                Member m = memberRepository.findById(req.getTreasurer());
-                if (m == null) throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Treasurer not found");
-                structure.setTreasurer(m);
-            }
-            if (req.getSecretary() != null) {
-                Member m = memberRepository.findById(req.getSecretary());
-                if (m == null) throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Secretary not found");
-                structure.setSecretary(m);
-            }
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (SQLException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    e.getMessage());
         }
-        return structure;
+
+        return feeRepo.saveAll(collectivityId, fees);
+    }
+
+
+    public void pay(MemberPayment payment) {
+        paymentRepo.save(payment);
+    }
+    public List<FinancialAccountResponse> getFinancialAccounts(String collectivityId, LocalDate at) {
+        return collecRepo.findFinancialAccountsByCollectivityAndDate(collectivityId, at);
+    }
+
+    public Collectivity getCollectivityById(String id) throws Exception {
+
+        Collectivity c = collecRepo.findById(id);
+
+        if (c == null) {
+            throw new RuntimeException("Collectivity not found");
+        }
+
+        List<Member> members = memberRepo.findByCollectivityId(id);
+        c.setMembers(members);
+
+        return c;
     }
 
     public Collectivity assignIdentity(String collectivityId,
