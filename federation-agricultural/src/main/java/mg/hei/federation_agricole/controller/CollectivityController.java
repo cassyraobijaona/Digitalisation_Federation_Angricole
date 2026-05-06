@@ -146,4 +146,11 @@ public class CollectivityController {
             throw new RuntimeException(e.getMessage()); // 500
         }
     }
+
+    @PatchMapping("/{collectivityId}/identity")
+    public Collectivity assignIdentity(
+            @PathVariable String collectivityId,
+            @RequestBody AssignIdentityRequest request) {
+        return collectivityService.assignIdentity(collectivityId, request);
+    }
 }
