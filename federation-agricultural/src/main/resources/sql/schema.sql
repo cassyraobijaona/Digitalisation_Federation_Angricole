@@ -337,3 +337,28 @@ INSERT INTO public.collectivity_transaction (id, collectivity_id, member_id, acc
                                                                                                                                   ('CT-C2-M6', 'col-2', 'C2-M6', 'C2-A-CASH',   100000.00, 'CASH',           '2026-01-01'),
                                                                                                                                   ('CT-C2-M7', 'col-2', 'C2-M7', 'C2-A-MOBILE-1', 40000.00, 'MOBILE_BANKING','2026-01-01'),
                                                                                                                                   ('CT-C2-M8', 'col-2', 'C2-M8', 'C2-A-MOBILE-1', 60000.00, 'MOBILE_BANKING','2026-01-01');
+
+
+-- 6Mai
+-- TABLE ACTIVITES
+CREATE TABLE collectivity_activity (
+                                       id                        VARCHAR(50)  NOT NULL,
+                                       collectivity_id           VARCHAR(50)  NOT NULL REFERENCES collectivity(id),
+                                       label                     VARCHAR(200) NOT NULL,
+                                       activity_type             VARCHAR(20)  NOT NULL CHECK (activity_type IN ('MEETING','TRAINING','OTHER')),
+                                       member_occupation_concerned TEXT,
+                                       recurrence_week_ordinal   INT,
+                                       recurrence_day_of_week    VARCHAR(5),
+                                       executive_date            DATE,
+                                       CONSTRAINT collectivity_activity_pkey PRIMARY KEY (id)
+);
+
+-- TABLE PRESENCES
+CREATE TABLE activity_attendance (
+                                     id                VARCHAR(50) NOT NULL,
+                                     activity_id       VARCHAR(50) NOT NULL REFERENCES collectivity_activity(id),
+                                     member_id         VARCHAR(50) NOT NULL REFERENCES member(id),
+                                     attendance_status VARCHAR(20) NOT NULL CHECK (attendance_status IN ('MISSING','ATTENDED','UNDEFINED')),
+                                     CONSTRAINT activity_attendance_pkey PRIMARY KEY (id),
+                                     CONSTRAINT activity_attendance_unique UNIQUE (activity_id, member_id)
+);
