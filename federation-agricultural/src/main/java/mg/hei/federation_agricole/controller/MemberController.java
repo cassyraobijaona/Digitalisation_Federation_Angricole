@@ -3,6 +3,7 @@ import mg.hei.federation_agricole.config.DatabaseConnection;
 import mg.hei.federation_agricole.exception.BadRequestException;
 import mg.hei.federation_agricole.model.dto.CreateMember;
 import mg.hei.federation_agricole.model.dto.Member;
+import mg.hei.federation_agricole.repository.CollectivityMemberRepository;
 import mg.hei.federation_agricole.repository.MemberRepository;
 import mg.hei.federation_agricole.repository.RefereeRepository;
 import mg.hei.federation_agricole.service.MemberService;
@@ -24,15 +25,18 @@ public class MemberController {
     private final MemberRepository memberRepo;
     private final RefereeRepository refereeRepo;
     private final MemberService service;
+    private final CollectivityMemberRepository cmRepo;
 
     public MemberController(DatabaseConnection db,
                             MemberRepository memberRepo,
                             RefereeRepository refereeRepo,
-                            MemberService service) {
+                            MemberService service,
+                            CollectivityMemberRepository cmRepo) {
         this.db = db;
         this.memberRepo = memberRepo;
         this.refereeRepo = refereeRepo;
         this.service = service;
+        this.cmRepo = cmRepo;
     }
 
     @PostMapping
@@ -48,7 +52,8 @@ public class MemberController {
                 conn.setAutoCommit(false);
                 service.validate(m, conn);
                 String id = memberRepo.save(m);
-                refereeRepo.save(conn, m.getId(), m.getReferees(), m.getRelation());
+                cmRepo.save(conn, m.getCollectivityIdentifier(), id);
+                refereeRepo.save(conn, id, m.getReferees(), m.getRelation());
                 conn.commit();
                 ids.add(id);
             } catch (BadRequestException e) {
