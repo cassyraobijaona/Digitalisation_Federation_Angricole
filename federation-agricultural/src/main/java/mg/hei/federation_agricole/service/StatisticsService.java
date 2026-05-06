@@ -1,9 +1,13 @@
 package mg.hei.federation_agricole.service;
 
+import mg.hei.federation_agricole.model.dto.CollectivityLocalStatistics;
 import mg.hei.federation_agricole.model.dto.CollectivityOverallStatistics;
 import mg.hei.federation_agricole.repository.StatisticsRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -23,5 +27,15 @@ public class StatisticsService {
             throw new RuntimeException("'from' must be before 'to'");
 
         return statsRepo.findOverallStatistics(from, to);
+    }
+
+    public List<CollectivityLocalStatistics> getLocalStatistics(
+            String collectivityId, LocalDate from, LocalDate to) {
+        try {
+            return statsRepo.getLocalStatistics(collectivityId, from, to);
+        } catch (SQLException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 }
