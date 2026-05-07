@@ -3,6 +3,9 @@ ALTER TYPE gender_enum
 
 ALTER TYPE gender_enum
     RENAME VALUE 'F' TO 'FEMALE';
+
+ALTER TABLE referee
+    ALTER COLUMN relation SET DEFAULT 'famille';
 -- =============================================
 -- 1. MEMBER
 -- =============================================

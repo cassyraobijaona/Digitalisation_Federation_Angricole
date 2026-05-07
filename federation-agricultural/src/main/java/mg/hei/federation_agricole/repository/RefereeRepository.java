@@ -8,15 +8,39 @@ import java.sql.SQLException;
 @Repository
 public class RefereeRepository {
 
-    public void save(Connection conn, String memberId, java.util.List<String> refs,String relation) throws SQLException {
+    public void save(Connection conn,
+                     String memberId,
+                     java.util.List<String> refs,
+                     String relation) throws SQLException {
 
-        String sql = "INSERT INTO referee(member_id, referee_id,relation) VALUES (?, ?,?)";
+        String sql;
+
+        boolean hasRelation =
+                relation != null && !relation.isBlank();
+
+        if (hasRelation) {
+            sql = """
+            INSERT INTO referee(member_id, referee_id, relation)
+            VALUES (?, ?, ?)
+        """;
+        } else {
+            sql = """
+            INSERT INTO referee(member_id, referee_id)
+            VALUES (?, ?)
+        """;
+        }
 
         for (String r : refs) {
+
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
                 stmt.setString(1, memberId);
                 stmt.setString(2, r);
-                stmt.setString(3, relation);
+
+                if (hasRelation) {
+                    stmt.setString(3, relation);
+                }
+
                 stmt.executeUpdate();
             }
         }
