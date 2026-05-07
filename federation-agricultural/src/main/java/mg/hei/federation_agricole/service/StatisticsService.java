@@ -31,11 +31,6 @@ public class StatisticsService {
 
     public List<CollectivityLocalStatistics> getLocalStatistics(
             String collectivityId, LocalDate from, LocalDate to) {
-        try {
-            return statsRepo.getLocalStatistics(collectivityId, from, to);
-        } catch (SQLException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
+        return statsRepo.getLocalStatistics(collectivityId, from, to);
     }
 }
