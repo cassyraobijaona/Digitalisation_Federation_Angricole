@@ -32,7 +32,7 @@ public class StatisticsController {
             return ResponseEntity.status(500).body("SERVER ERROR: " + e.getMessage());
         }
     }
-    @GetMapping("/collectivites/{id}/statistics")
+    @GetMapping("/collectivities/{id}/statistics")
     public ResponseEntity<?> getLocalStatistics(
             @PathVariable String id,
             @RequestParam String from,

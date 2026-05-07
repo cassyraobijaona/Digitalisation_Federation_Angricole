@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class MemberController {
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody List<CreateMember> members) {
+    public ResponseEntity<?> create(@RequestBody List<CreateMember> members) throws SQLException {
 
         if (members == null || members.isEmpty())
             throw new BadRequestException("Members list cannot be empty");
@@ -48,18 +49,39 @@ public class MemberController {
         List<String> ids = new ArrayList<>();
 
         for (CreateMember m : members) {
-            try (Connection conn = db.getConnection()) {
+
+            Connection conn = null;
+
+            try {
+
+                conn = db.getConnection();
                 conn.setAutoCommit(false);
+
                 service.validate(m, conn);
-                String id = memberRepo.save(m);
+
+                String id = memberRepo.save(conn, m);
+
                 cmRepo.save(conn, m.getCollectivityIdentifier(), id);
+
                 refereeRepo.save(conn, id, m.getReferees(), m.getRelation());
+
                 conn.commit();
+
                 ids.add(id);
-            } catch (BadRequestException e) {
-                throw e; // → 400
+
             } catch (Exception e) {
-                throw new RuntimeException(e.getMessage()); // → 500
+
+                if (conn != null) {
+                    conn.rollback();
+                }
+
+                throw new BadRequestException(e.getMessage());
+
+            } finally {
+
+                if (conn != null) {
+                    conn.close();
+                }
             }
         }
 
