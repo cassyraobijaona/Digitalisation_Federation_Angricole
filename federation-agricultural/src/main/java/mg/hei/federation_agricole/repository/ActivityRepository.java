@@ -204,10 +204,10 @@ public class ActivityRepository {
                 } else {
                     // Insert nouveau
                     String insertSql = """
-                    INSERT INTO activity_attendance(id, activity_id, member_id, attendance_status)
-                    VALUES (?, ?, ?, ?::attendance_status_enum)
+                    INSERT INTO activity_attendance(id, activity_id, member_id, attendance_status, attendance_date)
+                    VALUES (?, ?, ?, ?::attendance_status_enum, CURRENT_DATE)
                 """;
-                    PreparedStatement insert = conn.prepareStatement(insertSql);
+                                    PreparedStatement insert = conn.prepareStatement(insertSql);
                     insert.setString(1, attendanceId);
                     insert.setString(2, activityId);
                     insert.setString(3, input.getMemberIdentifier());
