@@ -177,52 +177,54 @@ public class StatisticsRepository {
         }
     }
 
-    private double getUnpaidAmount(Connection conn, String memberId,
-                                   String collectivityId, LocalDate from, LocalDate to) throws SQLException {
+    private double getUnpaidAmount(Connection conn,
+                                   String memberId,
+                                   String collectivityId,
+                                   LocalDate from,
+                                   LocalDate to) throws SQLException {
 
-        // Total dû = somme des cotisations ACTIVES de la collectivité
-        String totalDueSql = """
-            SELECT COALESCE(SUM(mf.amount), 0) as total
-            FROM membership_fee mf
-            WHERE mf.collectivity_id = ?
-            AND mf.status = 'ACTIVE'
-            AND mf.eligible_from <= ?
-        """;
+        String sql = """
+        SELECT GREATEST(
+            (
+                SELECT COALESCE(SUM(mf.amount), 0)
+                FROM membership_fee mf
+                WHERE mf.collectivity_id = ?
+                AND mf.status = 'ACTIVE'
+                AND mf.eligible_from <= ?
+            )
+            -
+            (
+                SELECT COALESCE(SUM(mp.amount), 0)
+                FROM member_payment mp
+                JOIN membership_fee mf
+                    ON mf.id = mp.membership_fee_id
+                WHERE mp.member_id = ?
+                AND mf.collectivity_id = ?
+                AND mf.status = 'ACTIVE'
+                AND mp.creation_date BETWEEN ? AND ?
+            ),
+            0
+        ) AS unpaid_amount
+    """;
 
-        // Total payé par ce membre
-        String totalPaidSql = """
-            SELECT COALESCE(SUM(mp.amount), 0) as total
-            FROM member_payment mp
-            JOIN membership_fee mf ON mf.id = mp.membership_fee_id
-            WHERE mp.member_id = ?
-            AND mf.collectivity_id = ?
-            AND mf.status = 'ACTIVE'
-            AND mp.creation_date BETWEEN ? AND ?
-        """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        double totalDue = 0;
-        double totalPaid = 0;
-
-        try (PreparedStatement ps = conn.prepareStatement(totalDueSql)) {
             ps.setString(1, collectivityId);
             ps.setDate(2, Date.valueOf(to));
+
+            ps.setString(3, memberId);
+            ps.setString(4, collectivityId);
+            ps.setDate(5, Date.valueOf(from));
+            ps.setDate(6, Date.valueOf(to));
+
             ResultSet rs = ps.executeQuery();
-            rs.next();
-            totalDue = rs.getDouble("total");
+
+            if (rs.next()) {
+                return rs.getDouble("unpaid_amount");
+            }
         }
 
-        try (PreparedStatement ps = conn.prepareStatement(totalPaidSql)) {
-            ps.setString(1, memberId);
-            ps.setString(2, collectivityId);
-            ps.setDate(3, Date.valueOf(from));
-            ps.setDate(4, Date.valueOf(to));
-            ResultSet rs = ps.executeQuery();
-            rs.next();
-            totalPaid = rs.getDouble("total");
-        }
-
-        double unpaid = totalDue - totalPaid;
-        return unpaid < 0 ? 0 : unpaid;
+        return 0;
     }
 }
 

@@ -1,3 +1,8 @@
+ALTER TYPE gender_enum
+    RENAME VALUE 'M' TO 'MALE';
+
+ALTER TYPE gender_enum
+    RENAME VALUE 'F' TO 'FEMALE';
 -- =============================================
 -- 1. MEMBER
 -- =============================================
