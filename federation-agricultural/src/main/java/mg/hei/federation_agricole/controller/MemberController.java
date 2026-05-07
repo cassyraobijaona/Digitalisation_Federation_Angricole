@@ -53,6 +53,7 @@ public class MemberController {
             Connection conn = null;
 
             try {
+
                 conn = db.getConnection();
                 conn.setAutoCommit(false);
 
@@ -68,7 +69,7 @@ public class MemberController {
 
                 ids.add(id);
 
-            } catch (SQLException e) {
+            } catch (Exception e) {
 
                 if (conn != null) {
                     conn.rollback();
@@ -76,8 +77,6 @@ public class MemberController {
 
                 throw new BadRequestException(e.getMessage());
 
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             } finally {
 
                 if (conn != null) {
